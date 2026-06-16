@@ -1,0 +1,21 @@
+/* Smart Links Opener — Русский */
+"Rules…" = "Правила…";
+"Set as default browser" = "Сделать браузером по умолчанию";
+"Default browser" = "Браузер по умолчанию";
+"Launch at login" = "Запускать при входе";
+"Quit" = "Выйти";
+"Choose browser" = "Выбор браузера";
+"Open link" = "Открыть ссылку";
+"Choose a browser" = "Выберите браузер";
+"Remember choice for %@" = "Запомнить выбор для домена «%@»";
+"Cancel" = "Отмена";
+"Route links by domain" = "Маршрутизация ссылок по доменам";
+"Rules" = "Правила";
+"Refresh browser list" = "Обновить список браузеров";
+"No rules yet. When you open a link, pick a browser and enable Remember, or add a rule below." = "Правил пока нет. При открытии ссылки выберите браузер и включите «Запомнить» либо добавьте правило ниже.";
+"domain, e.g. github.com" = "домен, напр. github.com";
+"Add" = "Добавить";
+"Waiting for system confirmation…" = "Ожидание подтверждения системы…";
+"Failed: %@" = "Не удалось: %@";
+"Change not confirmed." = "Изменение не подтверждено.";
+"Launch at login: %@" = "Автозапуск: %@";

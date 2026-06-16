@@ -1,0 +1,21 @@
+/* Smart Links Opener — Español */
+"Rules…" = "Reglas…";
+"Set as default browser" = "Establecer como navegador predeterminado";
+"Default browser" = "Navegador predeterminado";
+"Launch at login" = "Abrir al iniciar sesión";
+"Quit" = "Salir";
+"Choose browser" = "Elegir navegador";
+"Open link" = "Abrir enlace";
+"Choose a browser" = "Elige un navegador";
+"Remember choice for %@" = "Recordar la elección para %@";
+"Cancel" = "Cancelar";
+"Route links by domain" = "Enrutar enlaces por dominio";
+"Rules" = "Reglas";
+"Refresh browser list" = "Actualizar lista de navegadores";
+"No rules yet. When you open a link, pick a browser and enable Remember, or add a rule below." = "Aún no hay reglas. Al abrir un enlace, elige un navegador y activa «Recordar», o añade una regla abajo.";
+"domain, e.g. github.com" = "dominio, p. ej. github.com";
+"Add" = "Añadir";
+"Waiting for system confirmation…" = "Esperando la confirmación del sistema…";
+"Failed: %@" = "Error: %@";
+"Change not confirmed." = "Cambio no confirmado.";
+"Launch at login: %@" = "Abrir al iniciar sesión: %@";

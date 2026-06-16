@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+      Mac App Store build. App Sandbox is mandatory for MAS.
+      A browser router needs nothing beyond the base sandbox:
+        - receiving the http/https GetURL Apple Event for its own registered
+          schemes is allowed inside the sandbox;
+        - enumerating browsers via LaunchServices (NSWorkspace) is allowed;
+        - opening a URL in another app via NSWorkspace.open(...) is mediated by
+          LaunchServices and allowed (it launches, it does not read the app's
+          files), so no security-scoped bookmark is required;
+        - SMAppService login item and setDefaultApplication work sandboxed.
+      No network, file, or hardware entitlements are requested.
+    -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+</dict>
+</plist>

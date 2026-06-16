@@ -1,0 +1,21 @@
+/* Smart Links Opener — Українська */
+"Rules…" = "Правила…";
+"Set as default browser" = "Зробити браузером за замовчуванням";
+"Default browser" = "Браузер за замовчуванням";
+"Launch at login" = "Запускати під час входу";
+"Quit" = "Вийти";
+"Choose browser" = "Вибір браузера";
+"Open link" = "Відкрити посилання";
+"Choose a browser" = "Виберіть браузер";
+"Remember choice for %@" = "Запам’ятати вибір для домену «%@»";
+"Cancel" = "Скасувати";
+"Route links by domain" = "Маршрутизація посилань за доменами";
+"Rules" = "Правила";
+"Refresh browser list" = "Оновити список браузерів";
+"No rules yet. When you open a link, pick a browser and enable Remember, or add a rule below." = "Правил поки немає. Відкриваючи посилання, виберіть браузер і увімкніть «Запам’ятати» або додайте правило нижче.";
+"domain, e.g. github.com" = "домен, напр. github.com";
+"Add" = "Додати";
+"Waiting for system confirmation…" = "Очікування підтвердження системи…";
+"Failed: %@" = "Не вдалося: %@";
+"Change not confirmed." = "Зміну не підтверджено.";
+"Launch at login: %@" = "Автозапуск: %@";

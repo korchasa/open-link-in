@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+      Hardened Runtime baseline. The app uses only public APIs (NSWorkspace,
+      LaunchServices via NSWorkspace, ServiceManagement) and needs no special
+      exceptions. App Sandbox is intentionally omitted: a default-browser router
+      must enumerate and launch arbitrary other apps, which the sandbox forbids;
+      the Apple-sanctioned distribution path for such utilities is Developer ID
+      signing + notarization (outside the Mac App Store).
+    -->
+</dict>
+</plist>

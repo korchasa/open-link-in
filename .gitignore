@@ -1,0 +1,19 @@
+# Swift Package Manager / build output
+.build/
+.swiftpm/
+Package.resolved
+
+# Generated app bundles
+*.app/
+*.pkg
+*.dSYM/
+
+# Distribution artifacts
+*.provisionprofile
+*.p12
+*.cer
+build/
+dist/
+
+# macOS
+.DS_Store

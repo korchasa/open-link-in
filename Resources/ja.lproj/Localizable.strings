@@ -1,0 +1,21 @@
+/* Smart Links Opener — 日本語 */
+"Rules…" = "ルール…";
+"Set as default browser" = "デフォルトブラウザに設定";
+"Default browser" = "デフォルトブラウザ";
+"Launch at login" = "ログイン時に起動";
+"Quit" = "終了";
+"Choose browser" = "ブラウザを選択";
+"Open link" = "リンクを開く";
+"Choose a browser" = "ブラウザを選択してください";
+"Remember choice for %@" = "%@ の選択を記憶する";
+"Cancel" = "キャンセル";
+"Route links by domain" = "ドメインごとにリンクを振り分け";
+"Rules" = "ルール";
+"Refresh browser list" = "ブラウザ一覧を更新";
+"No rules yet. When you open a link, pick a browser and enable Remember, or add a rule below." = "ルールはまだありません。リンクを開くときにブラウザを選び「記憶する」をオンにするか、下にルールを追加してください。";
+"domain, e.g. github.com" = "ドメイン（例: github.com）";
+"Add" = "追加";
+"Waiting for system confirmation…" = "システムの確認を待っています…";
+"Failed: %@" = "失敗しました: %@";
+"Change not confirmed." = "変更は確認されませんでした。";
+"Launch at login: %@" = "ログイン時に起動: %@";
