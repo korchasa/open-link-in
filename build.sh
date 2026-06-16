@@ -31,6 +31,7 @@ cmd_prod() {
     for lproj in Resources/*.lproj; do
         [ -d "$lproj" ] && cp -R "$lproj" "$APP/Contents/Resources/"
     done
+    [ -f "Resources/AppIcon.icns" ] && cp "Resources/AppIcon.icns" "$APP/Contents/Resources/"
 
     echo "==> Ad-hoc code signing (Hardened Runtime)"
     codesign --force --options runtime \
@@ -65,6 +66,7 @@ cmd_appstore() {
     for lproj in Resources/*.lproj; do
         [ -d "$lproj" ] && cp -R "$lproj" "$app/Contents/Resources/"
     done
+    [ -f "Resources/AppIcon.icns" ] && cp "Resources/AppIcon.icns" "$app/Contents/Resources/"
 
     # Each App Store upload needs a unique, increasing build number (CI sets it).
     if [ -n "${MAS_BUILD_NUMBER:-}" ]; then
