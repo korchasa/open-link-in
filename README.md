@@ -170,3 +170,4 @@ Copyright © 2026 korchasa.
 
 Licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later) —
 see [LICENSE](LICENSE). Вклад в проект — см. [CONTRIBUTING.md](CONTRIBUTING.md).
+Конфиденциальность — [PRIVACY.md](PRIVACY.md) (данные не собираются).
