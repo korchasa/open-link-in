@@ -95,6 +95,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.handleIncoming(url)
     }
 
+    /// Local files (e.g. `.html`) reach the app as document-open Apple Events
+    /// (`kAEOpenDocuments`), which AppKit dispatches here — distinct from the
+    /// `kAEGetURL` web-link path (whose manual handler overrides only `GetURL`,
+    /// leaving `odoc` to AppKit). Routed through the same picker flow; a file
+    /// has no domain, so no rule is created. [REF:fr:file-open]
+    func application(_ application: NSApplication, open urls: [URL]) {
+        handledURLAtLaunch = true
+        for url in urls { store.handleIncoming(url) }
+    }
+
     // MARK: - Windows
 
     func showRules() {

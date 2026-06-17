@@ -22,6 +22,12 @@
 - **Acceptance:** `Tests/SmartLinksOpenerTests/DomainTests.swift::testAllSubdomainsMatchTheRule` (+ `testUnrelatedHostsDoNotMatch`) over `Domain.host(_:matchesRule:)`.
 - **Status:** [x]
 
+### 3.13 FR-FILE-OPEN: Route local HTML files [ANC:fr:file-open]
+- **Desc:** As the default web browser, macOS also hands the app local HTML files (`public.html`) via the document-open Apple Event (`kAEOpenDocuments`), distinct from the `kAEGetURL` web-link path. The app routes such file URLs through the same picker flow. A file has no domain, so no rule is created and the picker header shows the **filename** (not the full `file://` path) in one-time-open mode. The app must NOT fall back to opening its settings window.
+- **Scenario:** Double-click `~/page.html` while the app is the default browser → picker pops at the cursor titled `page.html` in "Open once — no rule created" mode → choose a browser → file opens in it; no rule stored; settings window does not appear.
+- **Acceptance:** automated — `./build.sh test LinkLabelTests` (`testFileURLShowsFilename` filename for `file://`, `testWebURLShowsRegistrableDomain` domain for web URL); `manual — maintainer — double-click a local .html → picker appears titled with the filename → choosing a browser opens the file in it; no rule stored; settings window does NOT appear`.
+- **Status:** [ ]
+
 ### 3.10 FR-SUBDOMAIN: Subdomain routing & registrable-domain persistence [ANC:fr:subdomain]
 - **Desc:** Remembering a choice stores the **registrable (second-level) domain** — `mail.google.com` → `google.com` — and every subdomain of that domain routes to the chosen browser. Multi-label public suffixes (`co.uk`, `github.io`, …) reduce correctly (`news.bbc.co.uk` → `bbc.co.uk`); unknown suffixes fall back to the last two labels.
 - **Scenario:** Open `https://drive.google.com` with no rule → pick a browser + remember → rule `google.com` stored; later `mail.google.com` and `google.com` both open silently in that browser.
@@ -90,7 +96,7 @@
 - **Perf/Reliability/Sec/Scale/UX:** Routing latency negligible (event-driven, no polling); only public Apple APIs (notarization-safe); no data collection; resident agent idle when not routing; native macOS minimalist UI; matched links never steal focus.
 
 ## 5. Interfaces
-- **API/Proto/UI:** System entry via Apple Event `kAEGetURL` (default-browser invocation); `NSWorkspace` to open URLs in a specific app and to query/set default handler; `SMAppService` for login item. UI: menu-bar `MenuBarExtra`, on-demand rules window, floating picker window.
+- **API/Proto/UI:** System entry via two Apple Events — `kAEGetURL` (web-link default-browser invocation) and `kAEOpenDocuments` (local files handed to the app as default browser, e.g. `.html`); `NSWorkspace` to open URLs in a specific app and to query/set default handler; `SMAppService` for login item. UI: menu-bar `MenuBarExtra`, on-demand rules window, floating picker window.
 
 ## 6. Acceptance
 - **Criteria:** All FR acceptance references above pass on the current commit; `./build.sh check` is green; `./build.sh prod` produces a signed, browser-registered bundle.

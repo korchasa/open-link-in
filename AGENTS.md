@@ -91,9 +91,11 @@ Cross-references between any two pieces of project knowledge — doc-to-doc, **a
 
 Maps source code paths to documentation sections that describe them. Used by commit workflows to determine which doc sections need updating when files change.
 
-- `Sources/SmartLinksOpener/App.swift` → SDS §3 (Agent shell / window manager), SRS FR-DEFAULT-BROWSER, FR-BACKGROUND-AGENT
+- `Sources/SmartLinksOpener/App.swift` → SDS §3 (Agent shell / window manager), SRS FR-DEFAULT-BROWSER, FR-BACKGROUND-AGENT, FR-FILE-OPEN
 - `Sources/SmartLinksOpener/AppStore.swift` → SDS §3 (State & routing), §4 (Data), §5 (Logic); SRS FR-ROUTE, FR-PICKER, FR-LOGIN-ITEM, FR-DEFAULT-BROWSER
-- `Sources/SmartLinksOpener/PickerView.swift` → SDS §3 (Picker view); SRS FR-PICKER
+- `Sources/SmartLinksOpener/PickerView.swift` → SDS §3 (Picker view); SRS FR-PICKER, FR-FILE-OPEN
+- `Sources/SmartLinksOpener/LinkLabel.swift` → SDS §3.10 (Link label), §5 (Logic); SRS FR-FILE-OPEN, FR-PICKER
+- `Tests/SmartLinksOpenerTests/LinkLabelTests.swift` → SRS FR-FILE-OPEN (picker-title acceptance)
 - `Sources/SmartLinksOpener/PickerKeys.swift` → SDS §3.9 (Picker keys), §5 (Logic); SRS FR-PICKER
 - `Tests/SmartLinksOpenerTests/PickerKeysTests.swift` → SRS FR-PICKER (hotkey/navigation acceptance)
 - `Sources/SmartLinksOpener/BrowserRanking.swift` → SDS §3.7 (Browser ranking), §5 (Logic); SRS FR-PICKER

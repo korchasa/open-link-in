@@ -2,13 +2,14 @@
 
 ## 1. Intro
 - **Purpose:** Describe the implementation of Smart Links Opener — a macOS default-browser routing agent.
-- **Rel to SRS:** Realizes [REF:fr:default-browser], [REF:fr:route], [REF:fr:picker], [REF:fr:rules-mgmt], [REF:fr:browser-visibility], [REF:fr:background-agent], [REF:fr:login-item], [REF:fr:i18n], [REF:fr:persist], [REF:fr:dist].
+- **Rel to SRS:** Realizes [REF:fr:default-browser], [REF:fr:route], [REF:fr:file-open], [REF:fr:picker], [REF:fr:rules-mgmt], [REF:fr:browser-visibility], [REF:fr:background-agent], [REF:fr:login-item], [REF:fr:i18n], [REF:fr:persist], [REF:fr:dist].
 
 ## 2. Arch
 - **Diagram:**
 ```mermaid
 flowchart LR
   sys[macOS click on http/https link] -->|kAEGetURL| del[AppDelegate]
+  file[macOS open local .html file] -->|kAEOpenDocuments| del
   del --> store[AppStore]
   store -->|match| ws[NSWorkspace.open in browser]
   store -->|no match| pick[PickerView window]
@@ -22,8 +23,8 @@ flowchart LR
 ## 3. Components
 
 ### 3.1 Agent shell — `App.swift` [ANC:sds:agent-shell]
-- **Purpose:** `@main SmartLinksOpenerApp` exposes only `MenuBarExtra` (Rules…, default-browser control, Launch at login, Quit). `AppDelegate` (`@MainActor`) sets `.accessory` activation policy, registers the `kAEGetURL` Apple Event handler, owns the on-demand rules window, and presents the picker as a borderless `PickerPanel` (`NSPanel` overriding `canBecomeKey`) anchored just below-right of the cursor (`positionNearCursor`, clamped to the active screen). Realizes [REF:fr:background-agent], [REF:fr:default-browser], [REF:fr:picker].
-- **Interfaces:** `handleGetURL(_:withReplyEvent:)` → `AppStore.handleIncoming`; `showRules()` / `showPicker()` / `closePicker()` wired to `AppStore` callbacks; `PickerPanel`, `positionNearCursor(_:)`.
+- **Purpose:** `@main SmartLinksOpenerApp` exposes only `MenuBarExtra` (Rules…, default-browser control, Launch at login, Quit). `AppDelegate` (`@MainActor`) sets `.accessory` activation policy, registers the `kAEGetURL` Apple Event handler, owns the on-demand rules window, and presents the picker as a borderless `PickerPanel` (`NSPanel` overriding `canBecomeKey`) anchored just below-right of the cursor (`positionNearCursor`, clamped to the active screen). Local files (e.g. `.html`) handed to the app as default browser arrive as document-open Apple Events (`kAEOpenDocuments`), which AppKit dispatches to `application(_:open:)`; these are routed through the same `handleIncoming` picker flow. Realizes [REF:fr:background-agent], [REF:fr:default-browser], [REF:fr:picker], [REF:fr:file-open].
+- **Interfaces:** `handleGetURL(_:withReplyEvent:)` → `AppStore.handleIncoming` (web links); `application(_:open:)` → `AppStore.handleIncoming` (local files); `showRules()` / `showPicker()` / `closePicker()` wired to `AppStore` callbacks; `PickerPanel`, `positionNearCursor(_:)`.
 - **Deps:** AppKit, SwiftUI, AppStore.
 
 ### 3.2 Domain state — `AppStore.swift` [ANC:sds:store]
@@ -32,7 +33,7 @@ flowchart LR
 - **Deps:** AppKit, ServiceManagement, Foundation, Models, BrowserRanking.
 
 ### 3.3 Picker view — `PickerView.swift` [ANC:sds:picker]
-- **Purpose:** Compact, keyboard-first SwiftUI glass panel (320pt wide, `.regularMaterial`, 16pt corners) for an unmatched URL: a mode header (label + second-level domain, where the label flips between "Open & remember" and the orange "Open once — no rule created"), a scrolling **vertical list** of browsers (only non-hidden, via `store.pickerBrowsers`; most-used first; per-row icon tile + name + selected `↩` + 1–9/`0` key badge; the selected row fills with the mode accent — blue normally, orange under ⇧), a `.topTrailing` ✕ close button, and a footer with the ⇧-Shift hint + "+N" queue badge. The default action is open & remember (`remember: !shiftHeld`); ⇧ Shift held → open-once preview (orange accent, no rule). Keystrokes captured by a `KeyCatcher` (`NSViewRepresentable`) that maps ↑/↓ (wrapping), Return, Esc, 1–9 and `0`→10th to `KeyCommand`, plus `flagsChanged` → `.shift(Bool)` for live ⇧ feedback (needed because SwiftUI `onKeyPress` is macOS 14+). Fixed semantic accent colors (`NSColor.systemBlue`/`systemOrange`) signal the mode rather than the user accent. Realizes [REF:fr:picker], [REF:fr:browser-visibility].
+- **Purpose:** Compact, keyboard-first SwiftUI glass panel (320pt wide, `.regularMaterial`, 16pt corners) for an unmatched URL: a mode header (label + title from `LinkLabel.title(for:)` — second-level domain for web links, filename for local files — where the label flips between "Open & remember" and the orange "Open once — no rule created"; a `file://` URL forces one-time-open since it has no domain and hides the ⇧ hint), a scrolling **vertical list** of browsers (only non-hidden, via `store.pickerBrowsers`; most-used first; per-row icon tile + name + selected `↩` + 1–9/`0` key badge; the selected row fills with the mode accent — blue normally, orange under ⇧), a `.topTrailing` ✕ close button, and a footer with the ⇧-Shift hint + "+N" queue badge. The default action is open & remember (`remember: !shiftHeld`); ⇧ Shift held → open-once preview (orange accent, no rule). Keystrokes captured by a `KeyCatcher` (`NSViewRepresentable`) that maps ↑/↓ (wrapping), Return, Esc, 1–9 and `0`→10th to `KeyCommand`, plus `flagsChanged` → `.shift(Bool)` for live ⇧ feedback (needed because SwiftUI `onKeyPress` is macOS 14+). Fixed semantic accent colors (`NSColor.systemBlue`/`systemOrange`) signal the mode rather than the user accent. Realizes [REF:fr:picker], [REF:fr:browser-visibility].
 - **Interfaces:** `PickerView(url:)`; `enum KeyCommand`; `struct KeyCatcher`; calls `store.choose / store.cancelPending`.
 - **Deps:** SwiftUI, AppKit, AppStore.
 
@@ -66,6 +67,11 @@ flowchart LR
 - **Interfaces:** `PickerKeys.hotkey(index:) -> String?`; `PickerKeys.selection(forKey:count:) -> Int?`; `PickerKeys.move(_ current:, by:, count:) -> Int`.
 - **Deps:** Foundation.
 
+### 3.10 Link label — `LinkLabel.swift` [ANC:sds:link-label]
+- **Purpose:** Pure, side-effect-free title logic for the picker header: a `file://` URL → its `lastPathComponent` (filename), any other URL → its registrable domain (via `Domain.registrable`), falling back to host then the full string. Extracted so it is unit-testable without a running view. Realizes part of [REF:fr:file-open], [REF:fr:picker].
+- **Interfaces:** `LinkLabel.title(for url: URL) -> String`.
+- **Deps:** Foundation, Domain.
+
 ## 4. Data
 - **Entities:**
   - `Rule`: `id: UUID`, `domain: String` (normalized, no `www.`), `bundleID: String`.
@@ -88,5 +94,5 @@ flowchart LR
 - **Scale/Fault/Sec/Logs:** Single user, tiny rule set. Faults surfaced via `statusMessage` (e.g., login-item/default-browser failures). Security: public APIs, Hardened Runtime, no sandbox by design. No logging/telemetry.
 
 ## 7. Constraints
-- **Simplified/Deferred:** `Domain.multiLabelSuffixes` is a curated subset of the Public Suffix List, not the full PSL — exotic ccTLD suffixes fall back to last-two-labels. Existing stored rules are not retro-migrated to registrable form (only new saves reduce). Tests cover the pure `Domain` logic, not the AppKit-bound store. App icon (`Resources/AppIcon.icns`) is a generated placeholder — replace with final art before release. No iCloud/sync of rules. Apple-event handling is the sole URL ingress (no SwiftUI `onOpenURL`).
+- **Simplified/Deferred:** `Domain.multiLabelSuffixes` is a curated subset of the Public Suffix List, not the full PSL — exotic ccTLD suffixes fall back to last-two-labels. Existing stored rules are not retro-migrated to registrable form (only new saves reduce). Tests cover the pure `Domain`/`LinkLabel` logic, not the AppKit-bound store. App icon (`Resources/AppIcon.icns`) is a generated placeholder — replace with final art before release. No iCloud/sync of rules. Apple events are the sole URL ingress (no SwiftUI `onOpenURL`): `kAEGetURL` for web links, `kAEOpenDocuments` (→ `application(_:open:)`) for local files handed to the app as default browser. Local files route to the picker but cannot create a rule (no domain); `CFBundleDocumentTypes` is intentionally NOT declared (delivery already follows the default-browser role; declaring it would advertise the app as an HTML viewer in every "Open With" menu).
 - **Distribution:** two build configs. `prod` = Developer ID + Hardened Runtime, no sandbox (`Resources/SmartLinksOpener.entitlements`). `appstore` = App Sandbox (`Resources/SmartLinksOpener.appstore.entitlements`) for the paid Mac App Store build; rules then live in the app's sandbox container. Realizes [REF:fr:dist.mas]. MAS upload/pricing is a manual maintainer step (see task `open-source-and-appstore`).

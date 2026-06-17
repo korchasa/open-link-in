@@ -14,7 +14,11 @@ struct PickerView: View {
     @State private var shiftHeld = false
 
     private var browsers: [Browser] { store.pickerBrowsers }
-    private var domain: String { store.ruleDomain(for: url) ?? url.host ?? url.absoluteString }
+    private var title: String { LinkLabel.title(for: url) }
+    /// A local file has no domain → no rule can be created, so the picker is
+    /// always in one-time-open mode for files (⇧ is irrelevant). [REF:fr:file-open]
+    private var isFile: Bool { url.isFileURL }
+    private var openOnce: Bool { shiftHeld || isFile }
     private var selectedBrowser: Browser? {
         browsers.indices.contains(selected) ? browsers[selected] : nil
     }
@@ -44,10 +48,10 @@ struct PickerView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(shiftHeld ? "Open once — no rule created" : "Open & remember")
+            Text(openOnce ? "Open once — no rule created" : "Open & remember")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(shiftHeld ? Color(nsColor: .systemOrange) : Color.secondary)
-            Text(domain)
+            Text(title)
                 .font(.system(size: 17, weight: .bold))
                 .lineLimit(1)
                 .truncationMode(.middle)
@@ -77,7 +81,7 @@ struct PickerView: View {
     private func row(index: Int, browser: Browser) -> some View {
         let isSelected = index == selected
         return Button {
-            store.choose(browser, for: url, remember: !shiftHeld)
+            store.choose(browser, for: url, remember: !openOnce)
         } label: {
             HStack(spacing: 11) {
                 Image(nsImage: store.icon(for: browser))
@@ -128,18 +132,22 @@ struct PickerView: View {
 
     private var footer: some View {
         HStack(spacing: 8) {
-            Text(verbatim: "⇧ Shift")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(shiftHeld ? Color.white : Color.secondary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(
-                    RoundedRectangle(cornerRadius: 5)
-                        .fill(shiftHeld ? Color(nsColor: .systemOrange) : Color(nsColor: .controlBackgroundColor))
-                )
-            Text("open once, without creating a rule")
-                .font(.system(size: 11.5))
-                .foregroundStyle(shiftHeld ? Color(nsColor: .systemOrange) : Color.secondary)
+            // The ⇧ open-once toggle is meaningless for local files (no domain,
+            // so no rule can ever be created). [REF:fr:file-open]
+            if !isFile {
+                Text(verbatim: "⇧ Shift")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(shiftHeld ? Color.white : Color.secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(shiftHeld ? Color(nsColor: .systemOrange) : Color(nsColor: .controlBackgroundColor))
+                    )
+                Text("open once, without creating a rule")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(shiftHeld ? Color(nsColor: .systemOrange) : Color.secondary)
+            }
             Spacer(minLength: 4)
             if store.pendingCount > 1 {
                 Text(verbatim: "+\(store.pendingCount - 1)")
@@ -186,12 +194,12 @@ struct PickerView: View {
         case .up: selected = PickerKeys.move(selected, by: -1, count: n)
         case .down: selected = PickerKeys.move(selected, by: 1, count: n)
         case .confirm:
-            if let b = selectedBrowser { store.choose(b, for: url, remember: !shiftHeld) }
+            if let b = selectedBrowser { store.choose(b, for: url, remember: !openOnce) }
         case .cancel:
             store.cancelPending()
         case .digit(let key):  // raw number key 0–9
             if let i = PickerKeys.selection(forKey: key, count: n) {
-                store.choose(browsers[i], for: url, remember: !shiftHeld)
+                store.choose(browsers[i], for: url, remember: !openOnce)
             }
         case .shift:
             break  // handled above
