@@ -317,10 +317,12 @@ When the root cause is outside your control (missing API keys/URLs, missing gene
 
 ### Detected Commands
 - `./build.sh check` — build (debug) + comment-scan + `swift format lint --strict` + tests (skips cleanly until a `Tests/` target exists).
-- `./build.sh test [filter]` — run the test suite (optional `--filter`); no-op until `Tests/` exists.
+- `./build.sh test [filter]` — run the test suite; the optional `filter` is **positional** (`./build.sh test BrowserRankingTests`, forwarded to `swift test --filter`), not a `--filter` flag. No-op until `Tests/` exists.
 - `./build.sh dev` — run the executable directly via `swift run` (Ctrl-C to stop).
 - `./build.sh prod` (default, also `./build.sh` / `./build.sh build`) — compile release, assemble `SmartLinksOpener.app`, sign (Hardened Runtime, ad-hoc), register with LaunchServices.
 - `./build.sh fmt` — auto-format `Sources/` in place via `swift format`.
+
+> ⚠️ **Local verification — bundle-id collision.** `prod` and `appstore` builds share `CFBundleIdentifier` `dev.korchasa.SmartLinksOpener`. With both present/running, `open -b dev.korchasa.SmartLinksOpener <url>` may route the Apple Event to a stale instance (e.g. an old picker still showing non-browsers). Before launch-testing: `pkill -9 -f SmartLinksOpener`, keep a single `.app` on disk, and `lsregister -u <path>` the other if it lingers in LaunchServices. Verify with `pgrep -fl SmartLinksOpener` (expect exactly one).
 
 ### Command Scripts
 - `build.sh` — single entry point implementing the standard interface as subcommands (`check`/`test`/`dev`/`prod`/`fmt`). No separate `scripts/` directory; the project's command runner handles everything inline.
