@@ -27,3 +27,6 @@
 "Not the system default browser" = "Nicht der Standardbrowser des Systems";
 "Rules apply only when macOS hands links to this app." = "Regeln greifen nur, wenn macOS Links an diese App übergibt.";
 "Disabled browsers aren't offered in rules." = "Deaktivierte Browser werden in Regeln nicht angeboten.";
+"Open & remember" = "Öffnen & merken";
+"Open once — no rule created" = "Einmal öffnen – keine Regel erstellt";
+"open once, without creating a rule" = "einmal öffnen, ohne eine Regel zu erstellen";

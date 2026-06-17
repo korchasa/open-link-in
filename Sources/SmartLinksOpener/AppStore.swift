@@ -21,7 +21,7 @@ final class AppStore: ObservableObject {
     /// Per-browser open counts, used to order the picker by frequency.
     @Published private(set) var usageCounts: [String: Int] = [:]
 
-    /// Bundle IDs the user has hidden from the picker grid. Stored as the
+    /// Bundle IDs the user has hidden from the picker list. Stored as the
     /// hidden set (not the visible one) so newly installed browsers show by
     /// default. [REF:fr:browser-visibility]
     @Published private(set) var hiddenBrowserIDs: Set<String> = []

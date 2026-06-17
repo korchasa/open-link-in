@@ -94,6 +94,8 @@ Maps source code paths to documentation sections that describe them. Used by com
 - `Sources/SmartLinksOpener/App.swift` → SDS §3 (Agent shell / window manager), SRS FR-DEFAULT-BROWSER, FR-BACKGROUND-AGENT
 - `Sources/SmartLinksOpener/AppStore.swift` → SDS §3 (State & routing), §4 (Data), §5 (Logic); SRS FR-ROUTE, FR-PICKER, FR-LOGIN-ITEM, FR-DEFAULT-BROWSER
 - `Sources/SmartLinksOpener/PickerView.swift` → SDS §3 (Picker view); SRS FR-PICKER
+- `Sources/SmartLinksOpener/PickerKeys.swift` → SDS §3.9 (Picker keys), §5 (Logic); SRS FR-PICKER
+- `Tests/SmartLinksOpenerTests/PickerKeysTests.swift` → SRS FR-PICKER (hotkey/navigation acceptance)
 - `Sources/SmartLinksOpener/BrowserRanking.swift` → SDS §3.7 (Browser ranking), §5 (Logic); SRS FR-PICKER
 - `Tests/SmartLinksOpenerTests/BrowserRankingTests.swift` → SRS FR-PICKER (frequency-order acceptance)
 - `Sources/SmartLinksOpener/BrowserVisibility.swift` → SDS §3.8 (Browser visibility), §5 (Logic); SRS FR-BROWSER-VISIBILITY

@@ -32,7 +32,7 @@ flowchart LR
 - **Deps:** AppKit, ServiceManagement, Foundation, Models, BrowserRanking.
 
 ### 3.3 Picker view — `PickerView.swift` [ANC:sds:picker]
-- **Purpose:** Compact, keyboard-first SwiftUI view for an unmatched URL: header (domain + full URL), a `LazyVGrid` icon grid of browsers (only non-hidden browsers, via `store.pickerBrowsers`; ≤4 columns, most-used first, 1–9 number badges), an explicit "Remember for <domain>" switch (ON by default, toggles label to "Open once"), and a footer with key hints + "+N" queue badge + Cancel. Keystrokes captured by a `KeyCatcher` (`NSViewRepresentable`) that maps arrows/Return/Esc/1–9 to a `KeyCommand` (needed because SwiftUI `onKeyPress` is macOS 14+). Realizes [REF:fr:picker], [REF:fr:browser-visibility].
+- **Purpose:** Compact, keyboard-first SwiftUI glass panel (320pt wide, `.regularMaterial`, 16pt corners) for an unmatched URL: a mode header (label + second-level domain, where the label flips between "Open & remember" and the orange "Open once — no rule created"), a scrolling **vertical list** of browsers (only non-hidden, via `store.pickerBrowsers`; most-used first; per-row icon tile + name + selected `↩` + 1–9/`0` key badge; the selected row fills with the mode accent — blue normally, orange under ⇧), a `.topTrailing` ✕ close button, and a footer with the ⇧-Shift hint + "+N" queue badge. The default action is open & remember (`remember: !shiftHeld`); ⇧ Shift held → open-once preview (orange accent, no rule). Keystrokes captured by a `KeyCatcher` (`NSViewRepresentable`) that maps ↑/↓ (wrapping), Return, Esc, 1–9 and `0`→10th to `KeyCommand`, plus `flagsChanged` → `.shift(Bool)` for live ⇧ feedback (needed because SwiftUI `onKeyPress` is macOS 14+). Fixed semantic accent colors (`NSColor.systemBlue`/`systemOrange`) signal the mode rather than the user accent. Realizes [REF:fr:picker], [REF:fr:browser-visibility].
 - **Interfaces:** `PickerView(url:)`; `enum KeyCommand`; `struct KeyCatcher`; calls `store.choose / store.cancelPending`.
 - **Deps:** SwiftUI, AppKit, AppStore.
 
@@ -61,13 +61,18 @@ flowchart LR
 - **Interfaces:** `BrowserVisibility.visible(_ browsers: [Browser], hidden: Set<String>) -> [Browser]` (order-preserving filter); `BrowserVisibility.canHide(_ id:, hidden:, all:) -> Bool` (false unless ≥1 browser would remain visible — guards an empty picker).
 - **Deps:** Foundation, Models.
 
+### 3.9 Picker keys — `PickerKeys.swift` [ANC:sds:picker-keys]
+- **Purpose:** Pure, side-effect-free keyboard logic for the picker — hotkey labels (1–9, "0" for the tenth, none beyond), number-key→row mapping (count-bounded), and wrapping ↑/↓ navigation. Extracted from `PickerView` so it is unit-testable without a running view. Realizes part of [REF:fr:picker].
+- **Interfaces:** `PickerKeys.hotkey(index:) -> String?`; `PickerKeys.selection(forKey:count:) -> Int?`; `PickerKeys.move(_ current:, by:, count:) -> Int`.
+- **Deps:** Foundation.
+
 ## 4. Data
 - **Entities:**
   - `Rule`: `id: UUID`, `domain: String` (normalized, no `www.`), `bundleID: String`.
   - `Browser`: `name`, `bundleID`, `appURL` (runtime-only, from LaunchServices).
 - **ERD:** Rule *→1* Browser (by `bundleID`; browser may be absent if uninstalled → shown with ⚠️).
   - `usageCounts`: `[bundleID: Int]` open counts (runtime + persisted), ordering the picker by frequency.
-  - `hiddenBrowserIDs`: `Set<String>` of bundle IDs hidden from the picker grid (persisted as a JSON array).
+  - `hiddenBrowserIDs`: `Set<String>` of bundle IDs hidden from the picker list (persisted as a JSON array).
 - **Migration:** `UserDefaults` keys `rules.v1` (JSON array of `Rule`), `usage.v1` (JSON `[String: Int]` open counts), and `hiddenBrowsers.v1` (JSON `[String]` hidden bundle IDs). Versioned keys allow future migration; AppKit auto-persists window frame.
 
 ## 5. Logic

@@ -27,3 +27,6 @@
 "Not the system default browser" = "システムの既定のブラウザではありません";
 "Rules apply only when macOS hands links to this app." = "ルールは macOS がこのアプリにリンクを渡したときにのみ適用されます。";
 "Disabled browsers aren't offered in rules." = "無効なブラウザはルールで選択できません。";
+"Open & remember" = "開いて記憶";
+"Open once — no rule created" = "一度だけ開く — ルールは作成されません";
+"open once, without creating a rule" = "ルールを作成せず一度だけ開く";

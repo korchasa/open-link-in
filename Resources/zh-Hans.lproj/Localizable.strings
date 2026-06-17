@@ -27,3 +27,6 @@
 "Not the system default browser" = "不是系统默认浏览器";
 "Rules apply only when macOS hands links to this app." = "仅当 macOS 将链接交给此应用时，规则才会生效。";
 "Disabled browsers aren't offered in rules." = "已停用的浏览器不会出现在规则中。";
+"Open & remember" = "打开并记住";
+"Open once — no rule created" = "仅打开一次 — 不创建规则";
+"open once, without creating a rule" = "仅打开一次，不创建规则";

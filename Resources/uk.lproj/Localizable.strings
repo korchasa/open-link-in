@@ -27,3 +27,6 @@
 "Not the system default browser" = "Не типовий браузер у системі";
 "Rules apply only when macOS hands links to this app." = "Правила спрацюють, лише коли macOS передає посилання цьому застосунку.";
 "Disabled browsers aren't offered in rules." = "Вимкнені браузери не пропонуються в правилах.";
+"Open & remember" = "Відкрити та запам’ятати";
+"Open once — no rule created" = "Відкрити один раз — правило не створиться";
+"open once, without creating a rule" = "відкрити один раз, без створення правила";

@@ -2,168 +2,199 @@ import AppKit
 import SwiftUI
 
 /// Compact, keyboard-first picker shown for every link without a rule.
-/// Browsers are a grid of icons (most-used first) with 1–9 quick-keys; arrows
-/// move the highlight, Return opens it, Esc cancels. Remembering is ON by
-/// default and shown explicitly. [REF:fr:picker]
+/// Browsers are a vertical list (most-used first) with 1–9 quick-keys (and 0 for
+/// the tenth); ↑/↓ move the highlight (wrapping), Return opens it, Esc or the ✕
+/// cancels. Choosing a browser **creates a rule for the second-level domain and
+/// opens** by default; holding **⇧ Shift** switches to a one-time open (orange
+/// accent, header changes, no rule). [REF:fr:picker]
 struct PickerView: View {
     @EnvironmentObject var store: AppStore
     let url: URL
-    @State private var remember = true
     @State private var selected = 0
+    @State private var shiftHeld = false
 
     private var browsers: [Browser] { store.pickerBrowsers }
-    private var columns: Int { max(1, min(browsers.count, 4)) }
     private var domain: String { store.ruleDomain(for: url) ?? url.host ?? url.absoluteString }
     private var selectedBrowser: Browser? {
         browsers.indices.contains(selected) ? browsers[selected] : nil
     }
 
+    /// Blue = "open & remember" (default); orange = "open once" while ⇧ is held.
+    /// Fixed semantic colors (not the user accent) so the mode reads at a glance.
+    private var accent: Color { shiftHeld ? Color(nsColor: .systemOrange) : Color(nsColor: .systemBlue) }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 0) {
             header
-            grid
-            rememberRow
+            Divider()
+            list
+            Divider()
             footer
         }
-        .padding(18)
-        .frame(width: 360)
+        .frame(width: 320)
         .background(
             KeyCatcher { command in handle(command) }
         )
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(alignment: .topTrailing) { closeButton }
+        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
-    // MARK: Header — domain first, full URL secondary
+    // MARK: Header — mode label + domain
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("Open in…")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        VStack(alignment: .leading, spacing: 3) {
+            Text(shiftHeld ? "Open once — no rule created" : "Open & remember")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(shiftHeld ? Color(nsColor: .systemOrange) : Color.secondary)
             Text(domain)
-                .font(.title3).bold()
+                .font(.system(size: 17, weight: .bold))
                 .lineLimit(1)
                 .truncationMode(.middle)
-            Text(url.absoluteString)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .textSelection(.enabled)
+                .padding(.trailing, 26)  // clear of the ✕
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.top, 15)
+        .padding(.bottom, 13)
     }
 
-    // MARK: Grid of browser icons
+    // MARK: Vertical list of browsers
 
-    private var grid: some View {
-        LazyVGrid(
-            columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: columns),
-            spacing: 8
-        ) {
-            ForEach(Array(browsers.enumerated()), id: \.element.id) { index, browser in
-                browserCell(index: index, browser: browser)
-            }
-        }
-    }
-
-    private func browserCell(index: Int, browser: Browser) -> some View {
-        Button {
-            store.choose(browser, for: url, remember: remember)
-        } label: {
-            VStack(spacing: 4) {
-                ZStack(alignment: .topTrailing) {
-                    Image(nsImage: store.icon(for: browser))
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                    if index < 9 {
-                        Text(verbatim: "\(index + 1)")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 14, height: 14)
-                            .background(Circle().fill(.black.opacity(0.55)))
-                            .offset(x: 5, y: -5)
-                    }
+    private var list: some View {
+        ScrollView {
+            VStack(spacing: 2) {
+                ForEach(Array(browsers.enumerated()), id: \.element.id) { index, browser in
+                    row(index: index, browser: browser)
                 }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+        }
+        .frame(maxHeight: 360)
+    }
+
+    private func row(index: Int, browser: Browser) -> some View {
+        let isSelected = index == selected
+        return Button {
+            store.choose(browser, for: url, remember: !shiftHeld)
+        } label: {
+            HStack(spacing: 11) {
+                Image(nsImage: store.icon(for: browser))
+                    .resizable()
+                    .frame(width: 28, height: 28)
+                    .clipShape(RoundedRectangle(cornerRadius: 7))
                 Text(browser.name)
-                    .font(.caption2)
+                    .font(.system(size: 13.5, weight: .medium))
                     .lineLimit(1)
                     .truncationMode(.tail)
+                    .foregroundStyle(isSelected ? Color.white : Color.primary)
+                Spacer(minLength: 0)
+                if isSelected {
+                    Text(verbatim: "↩")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Color.white.opacity(0.85))
+                }
+                if let key = PickerKeys.hotkey(index: index) {
+                    keyBadge(key, selected: isSelected)
+                }
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 9)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 4)
-            .contentShape(RoundedRectangle(cornerRadius: 10))
+            .contentShape(RoundedRectangle(cornerRadius: 9))
             .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(index == selected ? Color.accentColor.opacity(0.22) : Color.clear)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .strokeBorder(index == selected ? Color.accentColor : .clear, lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: 9)
+                    .fill(isSelected ? accent : Color.clear)
             )
         }
         .buttonStyle(.plain)
         .help(browser.name)
     }
 
-    // MARK: Explicit remember
-
-    private var rememberRow: some View {
-        Toggle(isOn: $remember) {
-            if remember {
-                Text("Remember for \(domain)")
-                    .font(.callout)
-            } else {
-                Text("Open once")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .toggleStyle(.switch)
-        .controlSize(.small)
-        .tint(.accentColor)
+    private func keyBadge(_ key: String, selected: Bool) -> some View {
+        Text(verbatim: key)
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(selected ? Color.white : Color.secondary)
+            .frame(minWidth: 20, minHeight: 20)
+            .padding(.horizontal, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(selected ? Color.white.opacity(0.25) : Color(nsColor: .controlBackgroundColor))
+            )
     }
 
-    // MARK: Footer — key hints + queue depth + cancel
+    // MARK: Footer — ⇧ Shift hint + queue depth
 
     private var footer: some View {
         HStack(spacing: 8) {
-            Text(verbatim: "1–9  ·  ↩  ·  esc")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+            Text(verbatim: "⇧ Shift")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(shiftHeld ? Color.white : Color.secondary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(shiftHeld ? Color(nsColor: .systemOrange) : Color(nsColor: .controlBackgroundColor))
+                )
+            Text("open once, without creating a rule")
+                .font(.system(size: 11.5))
+                .foregroundStyle(shiftHeld ? Color(nsColor: .systemOrange) : Color.secondary)
+            Spacer(minLength: 4)
             if store.pendingCount > 1 {
                 Text(verbatim: "+\(store.pendingCount - 1)")
                     .font(.caption2.bold())
+                    .foregroundStyle(.secondary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 1)
                     .background(Capsule().fill(.quaternary))
             }
-            Spacer()
-            Button("Cancel") { store.cancelPending() }
-                .controlSize(.small)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var closeButton: some View {
+        Button {
+            store.cancelPending()
+        } label: {
+            Image(systemName: "xmark")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.secondary)
+                .frame(width: 24, height: 24)
+                .background(Circle().fill(Color.primary.opacity(0.06)))
+        }
+        .buttonStyle(.plain)
+        .padding(13)
+        .help("Cancel")
     }
 
     // MARK: Keyboard
 
     private func handle(_ command: KeyCommand) {
+        if case .shift(let held) = command {
+            shiftHeld = held
+            return
+        }
         guard !browsers.isEmpty else {
             if case .cancel = command { store.cancelPending() }
             return
         }
+        let n = browsers.count
         switch command {
-        case .left: selected = max(0, selected - 1)
-        case .right: selected = min(browsers.count - 1, selected + 1)
-        case .up: selected = max(0, selected - columns)
-        case .down: selected = min(browsers.count - 1, selected + columns)
+        case .up: selected = PickerKeys.move(selected, by: -1, count: n)
+        case .down: selected = PickerKeys.move(selected, by: 1, count: n)
         case .confirm:
-            if let b = selectedBrowser { store.choose(b, for: url, remember: remember) }
+            if let b = selectedBrowser { store.choose(b, for: url, remember: !shiftHeld) }
         case .cancel:
             store.cancelPending()
-        case .digit(let n):
-            if n >= 1, n <= browsers.count {
-                store.choose(browsers[n - 1], for: url, remember: remember)
+        case .digit(let key):  // raw number key 0–9
+            if let i = PickerKeys.selection(forKey: key, count: n) {
+                store.choose(browsers[i], for: url, remember: !shiftHeld)
             }
+        case .shift:
+            break  // handled above
         }
     }
 }
@@ -171,8 +202,9 @@ struct PickerView: View {
 // MARK: - Key capture (works on macOS 13; no onKeyPress dependency)
 
 enum KeyCommand {
-    case up, down, left, right, confirm, cancel
-    case digit(Int)
+    case up, down, confirm, cancel
+    case digit(Int)  // raw number key, 0–9 (PickerKeys maps "0" to the tenth row)
+    case shift(Bool)
 }
 
 struct KeyCatcher: NSViewRepresentable {
@@ -199,17 +231,21 @@ struct KeyCatcher: NSViewRepresentable {
             }
         }
 
+        // Live ⇧ feedback: the picker switches to "open once" while Shift is held.
+        override func flagsChanged(with event: NSEvent) {
+            onCommand?(.shift(event.modifierFlags.contains(.shift)))
+            super.flagsChanged(with: event)
+        }
+
         override func keyDown(with event: NSEvent) {
             switch event.keyCode {
-            case 123: onCommand?(.left)
-            case 124: onCommand?(.right)
             case 125: onCommand?(.down)
             case 126: onCommand?(.up)
             case 36, 76: onCommand?(.confirm)  // return, enter
             case 53: onCommand?(.cancel)  // esc
             default:
-                if let s = event.charactersIgnoringModifiers, let n = Int(s), (1...9).contains(n) {
-                    onCommand?(.digit(n))
+                if let s = event.charactersIgnoringModifiers, let n = Int(s), (0...9).contains(n) {
+                    onCommand?(.digit(n))  // raw key; PickerKeys maps 1–9/0 to rows
                 } else {
                     super.keyDown(with: event)
                 }

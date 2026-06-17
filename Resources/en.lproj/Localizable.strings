@@ -27,3 +27,6 @@
 "Not the system default browser" = "Not the system default browser";
 "Rules apply only when macOS hands links to this app." = "Rules apply only when macOS hands links to this app.";
 "Disabled browsers aren't offered in rules." = "Disabled browsers aren't offered in rules.";
+"Open & remember" = "Open & remember";
+"Open once — no rule created" = "Open once — no rule created";
+"open once, without creating a rule" = "open once, without creating a rule";
