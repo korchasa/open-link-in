@@ -1,16 +1,18 @@
 import AppKit
 
-/// Builds the menu-bar status image from the app's brand icon. The product
-/// decision is to brand the menu bar with the full-color app icon (not a
-/// monochrome template glyph), so `render` keeps color and a fixed point size.
-/// [REF:fr:app-icon]
+/// Builds the monochrome menu-bar status image. macOS convention is a *template*
+/// image: a single-color glyph whose alpha silhouette the system tints
+/// automatically (black in a light menu bar, white in dark, highlighted when the
+/// menu opens). We use the `link` SF Symbol — matching the brand's link glyph —
+/// as that template, not the full-color app icon (whose silhouette is a solid
+/// rounded square). [REF:fr:app-icon]
 enum MenuBarIcon {
-    /// Status-bar images render ~18pt tall; fix the menu-bar icon to that.
-    static let pointSize: CGFloat = 18
+    /// Status-bar glyphs render ~16pt; fix the menu-bar symbol to that.
+    static let pointSize: CGFloat = 16
 
-    /// Rescale `source` into a `pointSize`×`pointSize` image, full-color
-    /// (`isTemplate = false`) so the brand art is preserved in the menu bar.
-    /// Pure and total over any non-nil `NSImage` — the testable core.
+    /// Normalize `source` into a `pointSize`×`pointSize` template image
+    /// (`isTemplate = true`) so the system tints it for the menu bar. Pure and
+    /// total over any non-nil `NSImage` — the testable core.
     static func render(from source: NSImage) -> NSImage {
         let size = NSSize(width: pointSize, height: pointSize)
         let image = NSImage(size: size)
@@ -22,17 +24,18 @@ enum MenuBarIcon {
             fraction: 1
         )
         image.unlockFocus()
-        image.isTemplate = false
+        image.isTemplate = true
         return image
     }
 
-    /// The menu-bar image sourced from the running app's own icon (the bundled
-    /// `AppIcon.icns`). Falls back to a system symbol when no app icon resolves
-    /// (e.g. `swift run` without a bundle); never returns nil.
+    /// The menu-bar image: the `link` SF Symbol configured at the menu-bar point
+    /// size, normalized to a template by `render`. Falls back to an empty image
+    /// if the symbol fails to resolve; never returns nil.
     static func statusItem() -> NSImage {
+        let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
         let source =
-            NSImage(named: NSImage.applicationIconName)
-            ?? NSImage(systemSymbolName: "link.circle.fill", accessibilityDescription: nil)
+            NSImage(systemSymbolName: "link", accessibilityDescription: "Smart Links Opener")?
+            .withSymbolConfiguration(config)
             ?? NSImage()
         return render(from: source)
     }

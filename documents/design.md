@@ -73,7 +73,7 @@ flowchart LR
 - **Deps:** Foundation, Domain.
 
 ### 3.11 Menu-bar icon — `MenuBarIcon.swift` [ANC:sds:menu-bar-icon]
-- **Purpose:** Builds the menu-bar status image from the brand app icon. `render(from:)` is the pure, testable core — rescales any source `NSImage` to a fixed point size (`pointSize = 18`) and marks it non-template so the full-color brand art is preserved (product decision: brand the menu bar, not a monochrome glyph). `statusItem()` sources `NSImage(named: .applicationIconName)` (the bundled `AppIcon.icns`) with a system-symbol fallback for un-bundled `swift run`. Realizes [REF:fr:app-icon].
+- **Purpose:** Builds the monochrome menu-bar status image. `render(from:)` is the pure, testable core — normalizes any source `NSImage` to a fixed point size (`pointSize = 16`) and marks it a *template* (`isTemplate = true`) so macOS auto-tints it for light/dark menu bars (standard macOS convention, not the full-color app icon). `statusItem()` sources the `link` SF Symbol (matching the brand link glyph) at the menu-bar point size, with an empty-image fallback. Realizes [REF:fr:app-icon].
 - **Interfaces:** `MenuBarIcon.render(from: NSImage) -> NSImage`; `MenuBarIcon.statusItem() -> NSImage`; `MenuBarIcon.pointSize`.
 - **Deps:** AppKit.
 

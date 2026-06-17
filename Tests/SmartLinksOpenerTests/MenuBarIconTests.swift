@@ -5,7 +5,7 @@ import XCTest
 
 /// Acceptance for FR-APP-ICON (menu-bar branding): `MenuBarIcon.render` is the
 /// pure core that normalizes any source art to the fixed menu-bar point size and
-/// keeps it full-color (non-template) so the brand icon shows in the menu bar.
+/// marks it a template (monochrome) so macOS tints it for the menu bar.
 final class MenuBarIconTests: XCTestCase {
     func testRenderProducesFixedPointSize() {
         let source = NSImage(size: NSSize(width: 1024, height: 1024))
@@ -14,8 +14,12 @@ final class MenuBarIconTests: XCTestCase {
         XCTAssertEqual(out.size.height, MenuBarIcon.pointSize)
     }
 
-    func testRenderKeepsFullColorNotTemplate() {
+    func testRenderMarksTemplateForMonochrome() {
         let source = NSImage(size: NSSize(width: 512, height: 512))
-        XCTAssertFalse(MenuBarIcon.render(from: source).isTemplate)
+        XCTAssertTrue(MenuBarIcon.render(from: source).isTemplate)
+    }
+
+    func testStatusItemIsTemplate() {
+        XCTAssertTrue(MenuBarIcon.statusItem().isTemplate)
     }
 }
