@@ -323,12 +323,13 @@ When the root cause is outside your control (missing API keys/URLs, missing gene
   - code formatting check
   - static code analysis
   - all project tests
+  - (local only) rebuild the `.app` and relaunch it; skipped when `$CI` is set
 - `test <path>` — runs a single test file or test suite.
 - `dev` — runs the application in development mode with watch mode enabled.
 - `prod` — runs the application in production mode.
 
 ### Detected Commands
-- `./build.sh check` — build (debug) + comment-scan + `swift format lint --strict` + tests (skips cleanly until a `Tests/` target exists).
+- `./build.sh check` — build (debug) + comment-scan + `swift format lint --strict` + tests (skips cleanly until a `Tests/` target exists). Final step (local only): rebuild the `.app` via `prod` and relaunch it (`pkill` → `open`, best-effort — a GUI-less session just warns). Skipped when `$CI` is set so CI stays a pure verification gate.
 - `./build.sh test [filter]` — run the test suite; the optional `filter` is **positional** (`./build.sh test BrowserRankingTests`, forwarded to `swift test --filter`), not a `--filter` flag. No-op until `Tests/` exists.
 - `./build.sh dev` — run the executable directly via `swift run` (Ctrl-C to stop).
 - `./build.sh prod` (default, also `./build.sh` / `./build.sh build`) — compile release, assemble `SmartLinksOpener.app`, sign (Hardened Runtime, ad-hoc), register with LaunchServices.

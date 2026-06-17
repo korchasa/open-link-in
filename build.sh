@@ -96,21 +96,44 @@ cmd_appstore() {
 
 # --- check: the comprehensive verification gate ------------------------------
 cmd_check() {
-    echo "==> [1/4] Build (debug)"
+    echo "==> [1/5] Build (debug)"
     swift build
 
-    echo "==> [2/4] Comment scan (TODO/FIXME/HACK/XXX, swiftlint:disable)"
+    echo "==> [2/5] Comment scan (TODO/FIXME/HACK/XXX, swiftlint:disable)"
     if grep -RInE 'TODO|FIXME|HACK|XXX|swiftlint:disable|swift-format-ignore' Sources; then
         echo "    Found leftover markers above — resolve before shipping." >&2
         exit 1
     fi
     echo "    clean"
 
-    echo "==> [3/4] Format check (swift format lint)"
+    echo "==> [3/5] Format check (swift format lint)"
     swift format lint --strict --recursive Sources
 
-    echo "==> [4/4] Tests"
+    echo "==> [4/5] Tests"
     cmd_test
+
+    # Rebuild the .app and relaunch it so the running agent reflects the latest
+    # code. Skipped under CI ($CI set by GitHub Actions): the headless runner has
+    # no GUI session, so `open`-ing the menu-bar agent is pointless and `pkill`
+    # would be a no-op — there `check` stays a pure verification gate.
+    if [ -n "${CI:-}" ]; then
+        echo "==> [5/5] Rebuild & relaunch — skipped (CI: verification only)"
+    else
+        echo "==> [5/5] Rebuild & relaunch app"
+        cmd_prod
+        echo "==> Relaunching $APP"
+        pkill -9 -f "$BIN" 2>/dev/null || true
+        # Best-effort: a GUI-less session (SSH/remote/sandbox) cannot launch an
+        # Aqua app and `open` fails (-600). The bundle is already built and
+        # verified, so a failed relaunch must NOT fail the check gate — degrade
+        # to a warning. The `if` keeps it tolerated under `set -e`.
+        if open "$APP" 2>/dev/null; then
+            sleep 1
+            echo "    running instances: $(pgrep -x "$BIN" | tr '\n' ' ')"
+        else
+            echo "    warning: could not relaunch (no GUI session?) — bundle built at $APP" >&2
+        fi
+    fi
 
     echo "==> check passed"
 }
