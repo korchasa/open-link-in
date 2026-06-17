@@ -35,8 +35,8 @@
 - **Status:** [x]
 
 ### 3.4 FR-RULES-MGMT: Manage rules [ANC:fr:rules-mgmt]
-- **Desc:** Rules window lists rules (domain→browser), allows changing the browser, deleting, and adding a rule manually; refresh installed-browser list.
-- **Tasks:** [REF:task:2026-06-settings-window-browser-visibility | settings-window-browser-visibility]
+- **Desc:** Rules window (two-pane: browser sidebar + full-height rules pane) lists rules (domain→browser), allows changing the browser, deleting, and adding a rule manually.
+- **Tasks:** [REF:task:2026-06-settings-window-browser-visibility | settings-window-browser-visibility]; [REF:task:2026-06-rules-window-redesign-two-pane | rules-window-redesign-two-pane]
 - **Scenario:** Open rules window → add `example.com→Chrome` → appears in list → delete → removed.
 - **Acceptance:** `manual — maintainer — add/change/delete reflected in UI and persisted across relaunch`.
 - **Status:** [x]

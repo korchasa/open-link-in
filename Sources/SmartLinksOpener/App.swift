@@ -102,10 +102,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let host = NSHostingController(rootView: RulesView().environmentObject(store))
             let window = NSWindow(contentViewController: host)
             window.title = "Smart Links Opener"
-            window.styleMask = [.titled, .closable, .miniaturizable]
+            window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.isReleasedWhenClosed = false
-            window.setContentSize(NSSize(width: 500, height: 480))
-            window.center()
+            window.minSize = NSSize(width: 560, height: 420)
+            // Remember the user's size; only apply the default when nothing was restored.
+            window.setFrameAutosaveName("RulesWindow")
+            if !window.setFrameUsingName("RulesWindow") {
+                window.setContentSize(NSSize(width: 720, height: 560))
+                window.center()
+            }
             rulesWindow = window
         }
         NSApp.activate(ignoringOtherApps: true)

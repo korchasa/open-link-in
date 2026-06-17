@@ -9,11 +9,7 @@
 "Choose a browser" = "Choose a browser";
 "Remember choice for %@" = "Remember choice for %@";
 "Cancel" = "Cancel";
-"Route links by domain" = "Route links by domain";
-"Rules" = "Rules";
-"Refresh browser list" = "Refresh browser list";
 "No rules yet. When you open a link, pick a browser and enable Remember, or add a rule below." = "No rules yet. When you open a link, pick a browser and enable Remember, or add a rule below.";
-"domain, e.g. github.com" = "domain, e.g. github.com";
 "Add" = "Add";
 "Waiting for system confirmation…" = "Waiting for system confirmation…";
 "Failed: %@" = "Failed: %@";
@@ -22,3 +18,12 @@
 "Open in…" = "Open in…";
 "Remember for %@" = "Remember for %@";
 "Open once" = "Open once";
+"Browsers" = "Browsers";
+"Routing rules" = "Routing rules";
+"Domain" = "Domain";
+"Open in" = "Open in";
+"Make default" = "Make default";
+"Default browser in the system" = "Default browser in the system";
+"Not the system default browser" = "Not the system default browser";
+"Rules apply only when macOS hands links to this app." = "Rules apply only when macOS hands links to this app.";
+"Disabled browsers aren't offered in rules." = "Disabled browsers aren't offered in rules.";

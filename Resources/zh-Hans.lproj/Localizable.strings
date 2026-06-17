@@ -9,11 +9,7 @@
 "Choose a browser" = "请选择浏览器";
 "Remember choice for %@" = "记住对 %@ 的选择";
 "Cancel" = "取消";
-"Route links by domain" = "按域名分发链接";
-"Rules" = "规则";
-"Refresh browser list" = "刷新浏览器列表";
 "No rules yet. When you open a link, pick a browser and enable Remember, or add a rule below." = "暂无规则。打开链接时选择浏览器并开启“记住”，或在下方添加规则。";
-"domain, e.g. github.com" = "域名，例如 github.com";
 "Add" = "添加";
 "Waiting for system confirmation…" = "正在等待系统确认…";
 "Failed: %@" = "失败：%@";
@@ -22,3 +18,12 @@
 "Open in…" = "在以下打开…";
 "Remember for %@" = "记住 %@";
 "Open once" = "仅打开一次";
+"Browsers" = "浏览器";
+"Routing rules" = "路由规则";
+"Domain" = "域名";
+"Open in" = "打开方式";
+"Make default" = "设为默认";
+"Default browser in the system" = "系统默认浏览器";
+"Not the system default browser" = "不是系统默认浏览器";
+"Rules apply only when macOS hands links to this app." = "仅当 macOS 将链接交给此应用时，规则才会生效。";
+"Disabled browsers aren't offered in rules." = "已停用的浏览器不会出现在规则中。";

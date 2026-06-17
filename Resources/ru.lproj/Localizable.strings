@@ -9,11 +9,7 @@
 "Choose a browser" = "Выберите браузер";
 "Remember choice for %@" = "Запомнить выбор для домена «%@»";
 "Cancel" = "Отмена";
-"Route links by domain" = "Маршрутизация ссылок по доменам";
-"Rules" = "Правила";
-"Refresh browser list" = "Обновить список браузеров";
 "No rules yet. When you open a link, pick a browser and enable Remember, or add a rule below." = "Правил пока нет. При открытии ссылки выберите браузер и включите «Запомнить» либо добавьте правило ниже.";
-"domain, e.g. github.com" = "домен, напр. github.com";
 "Add" = "Добавить";
 "Waiting for system confirmation…" = "Ожидание подтверждения системы…";
 "Failed: %@" = "Не удалось: %@";
@@ -22,3 +18,12 @@
 "Open in…" = "Открыть в…";
 "Remember for %@" = "Запомнить для %@";
 "Open once" = "Открыть один раз";
+"Browsers" = "Браузеры";
+"Routing rules" = "Правила маршрутизации";
+"Domain" = "Домен";
+"Open in" = "Открывать в";
+"Make default" = "Сделать по умолчанию";
+"Default browser in the system" = "Браузер по умолчанию в системе";
+"Not the system default browser" = "Не браузер по умолчанию в системе";
+"Rules apply only when macOS hands links to this app." = "Правила сработают, только когда macOS отдаёт ссылки этому приложению.";
+"Disabled browsers aren't offered in rules." = "Выключенные браузеры не предлагаются в правилах.";

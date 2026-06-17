@@ -37,8 +37,8 @@ flowchart LR
 - **Deps:** SwiftUI, AppKit, AppStore.
 
 ### 3.4 Rules view — `RulesView.swift` [ANC:sds:rules]
-- **Purpose:** SwiftUI management window: default-browser status/button, rule list (domain→browser picker, delete), add-rule row, refresh browsers, launch-at-login. Realizes [REF:fr:rules-mgmt].
-- **Interfaces:** `RulesView()`; binds to `store`.
+- **Purpose:** SwiftUI management window, two-pane (Claude Design "Variant 2"). Left sidebar (236pt): brand header, browser availability toggles (hiding the last visible one blocked), launch-at-login. Right pane (full height): "Routing rules" title, default-browser banner (amber warning + "Make default" when not default; green confirmation when default), column header (Domain / Open in), scrollable rule list (browser-icon + domain + browser dropdown + delete), and a pinned add-rule row (domain field + dropdown + Add). Rule/add dropdowns offer only enabled (non-hidden) browsers; a rule already pointing at a hidden/uninstalled browser keeps showing its target. No refresh button. Realizes [REF:fr:rules-mgmt], [REF:fr:browser-visibility], [REF:fr:default-browser], [REF:fr:login-item].
+- **Interfaces:** `RulesView()`; binds to `store` (`browsers`, `pickerBrowsers`, `hiddenBrowserIDs`, `rules`, `isDefaultBrowser()`, `setAsDefaultBrowser()`, `launchAtLogin`, `icon(for:)`). Window default 720×560, min 560×420 (App.swift).
 - **Deps:** SwiftUI, AppStore.
 
 ### 3.6 Domain resolver — `Domain.swift` [ANC:sds:domain]

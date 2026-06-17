@@ -9,11 +9,7 @@
 "Choose a browser" = "Choisissez un navigateur";
 "Remember choice for %@" = "Mémoriser le choix pour %@";
 "Cancel" = "Annuler";
-"Route links by domain" = "Router les liens par domaine";
-"Rules" = "Règles";
-"Refresh browser list" = "Actualiser la liste des navigateurs";
 "No rules yet. When you open a link, pick a browser and enable Remember, or add a rule below." = "Aucune règle pour l’instant. À l’ouverture d’un lien, choisissez un navigateur et activez « Mémoriser », ou ajoutez une règle ci-dessous.";
-"domain, e.g. github.com" = "domaine, par ex. github.com";
 "Add" = "Ajouter";
 "Waiting for system confirmation…" = "En attente de la confirmation du système…";
 "Failed: %@" = "Échec : %@";
@@ -22,3 +18,12 @@
 "Open in…" = "Ouvrir dans…";
 "Remember for %@" = "Mémoriser pour %@";
 "Open once" = "Ouvrir une fois";
+"Browsers" = "Navigateurs";
+"Routing rules" = "Règles de routage";
+"Domain" = "Domaine";
+"Open in" = "Ouvrir dans";
+"Make default" = "Définir par défaut";
+"Default browser in the system" = "Navigateur par défaut du système";
+"Not the system default browser" = "Pas le navigateur par défaut du système";
+"Rules apply only when macOS hands links to this app." = "Les règles ne s’appliquent que lorsque macOS transmet les liens à cette app.";
+"Disabled browsers aren't offered in rules." = "Les navigateurs désactivés ne sont pas proposés dans les règles.";

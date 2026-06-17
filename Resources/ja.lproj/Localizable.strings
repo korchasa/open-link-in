@@ -9,11 +9,7 @@
 "Choose a browser" = "ブラウザを選択してください";
 "Remember choice for %@" = "%@ の選択を記憶する";
 "Cancel" = "キャンセル";
-"Route links by domain" = "ドメインごとにリンクを振り分け";
-"Rules" = "ルール";
-"Refresh browser list" = "ブラウザ一覧を更新";
 "No rules yet. When you open a link, pick a browser and enable Remember, or add a rule below." = "ルールはまだありません。リンクを開くときにブラウザを選び「記憶する」をオンにするか、下にルールを追加してください。";
-"domain, e.g. github.com" = "ドメイン（例: github.com）";
 "Add" = "追加";
 "Waiting for system confirmation…" = "システムの確認を待っています…";
 "Failed: %@" = "失敗しました: %@";
@@ -22,3 +18,12 @@
 "Open in…" = "開く先…";
 "Remember for %@" = "%@ を記憶する";
 "Open once" = "一度だけ開く";
+"Browsers" = "ブラウザ";
+"Routing rules" = "ルーティングルール";
+"Domain" = "ドメイン";
+"Open in" = "開くブラウザ";
+"Make default" = "デフォルトに設定";
+"Default browser in the system" = "システムの既定のブラウザ";
+"Not the system default browser" = "システムの既定のブラウザではありません";
+"Rules apply only when macOS hands links to this app." = "ルールは macOS がこのアプリにリンクを渡したときにのみ適用されます。";
+"Disabled browsers aren't offered in rules." = "無効なブラウザはルールで選択できません。";
