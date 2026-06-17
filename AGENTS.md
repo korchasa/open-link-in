@@ -85,6 +85,8 @@ Cross-references between any two pieces of project knowledge — doc-to-doc, **a
 
 - **Drift discipline** — removing or renaming an anchor obliges updating every reference to it. Checked mechanically by `scripts/check-salp.ts` (dead-REF / duplicate-ANC / surviving-legacy-grammar) where the project ships such a script.
 
+- **Local verification gap** — this repo ships NO `scripts/check-salp.ts`, and `./build.sh check` does NOT validate SALP; anchor/ref integrity is enforced only by the external `doc-anchors-validate` Stop hook. So a green `check` does not mean references resolve. After any edit that adds/moves a `[REF:ns:id]` or `[ANC:ns:id]`, verify before finishing that every new `[REF:...]` resolves to exactly one heading-line `[ANC:...]`. Do NOT trust a bare `grep` for anchors — matches inside backtick code spans or prose are NOT valid declarations (the validator ignores them), so a grep "hit" can be a false positive. When you add a `// [REF:fr:X]` code marker, add the `### FR-… [ANC:fr:X]` SRS section in the SAME change.
+
 ## Documentation Map
 
 Maps source code paths to documentation sections that describe them. Used by commit workflows to determine which doc sections need updating when files change.
@@ -328,6 +330,9 @@ When the root cause is outside your control (missing API keys/URLs, missing gene
 
 ### Command Scripts
 - `build.sh` — single entry point implementing the standard interface as subcommands (`check`/`test`/`dev`/`prod`/`fmt`). No separate `scripts/` directory; the project's command runner handles everything inline.
+
+### Git notes
+- Interactive git (`add -p`, `add -i`, `rebase -i`) is unavailable in this environment. To split ONE file's changes across two commits: temporarily edit the not-this-commit hunks back to their `HEAD` text, `git add <file>` (stages only this commit's delta), `git commit`, then edit the file to its final content and `git add` again for the next commit. Verify with `git diff --cached <file>` before every commit so content cannot leak into the wrong commit.
 
 ## Code Documentation
 
