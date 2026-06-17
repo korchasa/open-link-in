@@ -36,8 +36,16 @@
 
 ### 3.4 FR-RULES-MGMT: Manage rules [ANC:fr:rules-mgmt]
 - **Desc:** Rules window lists rules (domain→browser), allows changing the browser, deleting, and adding a rule manually; refresh installed-browser list.
+- **Tasks:** [REF:task:2026-06-settings-window-browser-visibility | settings-window-browser-visibility]
 - **Scenario:** Open rules window → add `example.com→Chrome` → appears in list → delete → removed.
 - **Acceptance:** `manual — maintainer — add/change/delete reflected in UI and persisted across relaunch`.
+- **Status:** [x]
+
+### 3.12 FR-BROWSER-VISIBILITY: Hide browsers from picker [ANC:fr:browser-visibility]
+- **Desc:** Settings sidebar toggles per-browser picker visibility. The "hidden" set is stored (not "visible"), so newly installed browsers appear by default. Hiding the last visible browser is blocked (picker can never be empty). Picker and rule/add dropdowns offer only non-hidden browsers; a rule already pointing at a hidden/uninstalled browser keeps showing its target.
+- **Tasks:** [REF:task:2026-06-settings-window-browser-visibility | settings-window-browser-visibility]
+- **Scenario:** Toggle off a browser in the sidebar → it disappears from the picker and dropdowns → attempt to hide the last remaining visible browser → blocked.
+- **Acceptance:** automated — `./build.sh test BrowserVisibilityTests`; `manual — maintainer — toggling sidebar visibility updates picker/dropdowns; last visible browser cannot be hidden`.
 - **Status:** [x]
 
 ### 3.5 FR-BACKGROUND-AGENT: Background menu-bar agent [ANC:fr:background-agent]

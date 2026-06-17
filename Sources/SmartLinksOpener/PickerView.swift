@@ -11,7 +11,7 @@ struct PickerView: View {
     @State private var remember = true
     @State private var selected = 0
 
-    private var browsers: [Browser] { store.browsers }
+    private var browsers: [Browser] { store.pickerBrowsers }
     private var columns: Int { max(1, min(browsers.count, 4)) }
     private var domain: String { store.ruleDomain(for: url) ?? url.host ?? url.absoluteString }
     private var selectedBrowser: Browser? {

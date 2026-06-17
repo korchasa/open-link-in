@@ -94,6 +94,8 @@ Maps source code paths to documentation sections that describe them. Used by com
 - `Sources/SmartLinksOpener/PickerView.swift` → SDS §3 (Picker view); SRS FR-PICKER
 - `Sources/SmartLinksOpener/BrowserRanking.swift` → SDS §3.7 (Browser ranking), §5 (Logic); SRS FR-PICKER
 - `Tests/SmartLinksOpenerTests/BrowserRankingTests.swift` → SRS FR-PICKER (frequency-order acceptance)
+- `Sources/SmartLinksOpener/BrowserVisibility.swift` → SDS §3.8 (Browser visibility), §5 (Logic); SRS FR-BROWSER-VISIBILITY
+- `Tests/SmartLinksOpenerTests/BrowserVisibilityTests.swift` → SRS FR-BROWSER-VISIBILITY (hidden-set + last-one-guard acceptance)
 - `Sources/SmartLinksOpener/RulesView.swift` → SDS §3 (Rules view); SRS FR-RULES-MGMT
 - `Sources/SmartLinksOpener/Domain.swift` → SDS §3.6 (Domain resolver), §5 (Logic); SRS FR-SUBDOMAIN, FR-ROUTE
 - `Tests/SmartLinksOpenerTests/DomainTests.swift` → SRS FR-SUBDOMAIN, FR-ROUTE (acceptance)

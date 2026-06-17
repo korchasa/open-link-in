@@ -2,7 +2,7 @@
 
 ## 1. Intro
 - **Purpose:** Describe the implementation of Smart Links Opener — a macOS default-browser routing agent.
-- **Rel to SRS:** Realizes [REF:fr:default-browser], [REF:fr:route], [REF:fr:picker], [REF:fr:rules-mgmt], [REF:fr:background-agent], [REF:fr:login-item], [REF:fr:i18n], [REF:fr:persist], [REF:fr:dist].
+- **Rel to SRS:** Realizes [REF:fr:default-browser], [REF:fr:route], [REF:fr:picker], [REF:fr:rules-mgmt], [REF:fr:browser-visibility], [REF:fr:background-agent], [REF:fr:login-item], [REF:fr:i18n], [REF:fr:persist], [REF:fr:dist].
 
 ## 2. Arch
 - **Diagram:**
@@ -27,12 +27,12 @@ flowchart LR
 - **Deps:** AppKit, SwiftUI, AppStore.
 
 ### 3.2 Domain state — `AppStore.swift` [ANC:sds:store]
-- **Purpose:** `@MainActor ObservableObject` singleton. Real-browser enumeration (apps handling both `http` and `https`, via `NSWorkspace`), rule CRUD + persistence, longest-suffix matching, opening URLs in a browser, per-browser usage tracking (`usage.v1`) feeding frequency order, a FIFO queue of pending links, default-browser handoff (`setDefaultApplication(at:toOpenURLsWithScheme:)`), login item (`SMAppService`). Realizes [REF:fr:route], [REF:fr:persist], [REF:fr:login-item], [REF:fr:default-browser], [REF:fr:picker].
-- **Interfaces:** `handleIncoming(_:)`, `choose(_:for:remember:)`, `cancelPending()`, `matchingBrowser(for:)`, `addRule/deleteRule/updateRuleBrowser`, `refreshBrowsers()`, `setAsDefaultBrowser()`, `isDefaultBrowser()`, `launchAtLogin`; published `pendingURL`/`pendingCount`/`usageCounts`. Private: `advanceQueue()`, `recordUse(_:)`, `handlerBundleIDs(forScheme:)`.
+- **Purpose:** `@MainActor ObservableObject` singleton. Real-browser enumeration (apps handling both `http` and `https`, via `NSWorkspace`), rule CRUD + persistence, longest-suffix matching, opening URLs in a browser, per-browser usage tracking (`usage.v1`) feeding frequency order, picker-visibility (hidden set under `hiddenBrowsers.v1`), a FIFO queue of pending links, default-browser handoff (`setDefaultApplication(at:toOpenURLsWithScheme:)`), login item (`SMAppService`). Realizes [REF:fr:route], [REF:fr:persist], [REF:fr:login-item], [REF:fr:default-browser], [REF:fr:picker], [REF:fr:browser-visibility].
+- **Interfaces:** `handleIncoming(_:)`, `choose(_:for:remember:)`, `cancelPending()`, `matchingBrowser(for:)`, `addRule/deleteRule/updateRuleBrowser`, `refreshBrowsers()`, `setAsDefaultBrowser()`, `isDefaultBrowser()`, `launchAtLogin`; picker-visibility `pickerBrowsers`, `canHideBrowser(_:)`, `setBrowserHidden(_:_:)`, published `hiddenBrowserIDs`; published `pendingURL`/`pendingCount`/`usageCounts`. Private: `advanceQueue()`, `recordUse(_:)`, `handlerBundleIDs(forScheme:)`, `loadHidden()`.
 - **Deps:** AppKit, ServiceManagement, Foundation, Models, BrowserRanking.
 
 ### 3.3 Picker view — `PickerView.swift` [ANC:sds:picker]
-- **Purpose:** Compact, keyboard-first SwiftUI view for an unmatched URL: header (domain + full URL), a `LazyVGrid` icon grid of browsers (≤4 columns, most-used first, 1–9 number badges), an explicit "Remember for <domain>" switch (ON by default, toggles label to "Open once"), and a footer with key hints + "+N" queue badge + Cancel. Keystrokes captured by a `KeyCatcher` (`NSViewRepresentable`) that maps arrows/Return/Esc/1–9 to a `KeyCommand` (needed because SwiftUI `onKeyPress` is macOS 14+). Realizes [REF:fr:picker].
+- **Purpose:** Compact, keyboard-first SwiftUI view for an unmatched URL: header (domain + full URL), a `LazyVGrid` icon grid of browsers (only non-hidden browsers, via `store.pickerBrowsers`; ≤4 columns, most-used first, 1–9 number badges), an explicit "Remember for <domain>" switch (ON by default, toggles label to "Open once"), and a footer with key hints + "+N" queue badge + Cancel. Keystrokes captured by a `KeyCatcher` (`NSViewRepresentable`) that maps arrows/Return/Esc/1–9 to a `KeyCommand` (needed because SwiftUI `onKeyPress` is macOS 14+). Realizes [REF:fr:picker], [REF:fr:browser-visibility].
 - **Interfaces:** `PickerView(url:)`; `enum KeyCommand`; `struct KeyCatcher`; calls `store.choose / store.cancelPending`.
 - **Deps:** SwiftUI, AppKit, AppStore.
 
@@ -56,13 +56,19 @@ flowchart LR
 - **Interfaces:** `BrowserRanking.sorted(_ browsers: [Browser], counts: [String: Int]) -> [Browser]`.
 - **Deps:** Foundation, Models.
 
+### 3.8 Browser visibility — `BrowserVisibility.swift` [ANC:sds:visibility]
+- **Purpose:** Pure, side-effect-free picker-visibility logic — which browsers the picker may show and whether a given browser may still be hidden. The "hidden" set is stored (not "visible") so newly installed browsers appear by default. Unit-tested in isolation. Realizes [REF:fr:browser-visibility].
+- **Interfaces:** `BrowserVisibility.visible(_ browsers: [Browser], hidden: Set<String>) -> [Browser]` (order-preserving filter); `BrowserVisibility.canHide(_ id:, hidden:, all:) -> Bool` (false unless ≥1 browser would remain visible — guards an empty picker).
+- **Deps:** Foundation, Models.
+
 ## 4. Data
 - **Entities:**
   - `Rule`: `id: UUID`, `domain: String` (normalized, no `www.`), `bundleID: String`.
   - `Browser`: `name`, `bundleID`, `appURL` (runtime-only, from LaunchServices).
 - **ERD:** Rule *→1* Browser (by `bundleID`; browser may be absent if uninstalled → shown with ⚠️).
   - `usageCounts`: `[bundleID: Int]` open counts (runtime + persisted), ordering the picker by frequency.
-- **Migration:** `UserDefaults` keys `rules.v1` (JSON array of `Rule`) and `usage.v1` (JSON `[String: Int]` open counts). Versioned keys allow future migration; AppKit auto-persists window frame.
+  - `hiddenBrowserIDs`: `Set<String>` of bundle IDs hidden from the picker grid (persisted as a JSON array).
+- **Migration:** `UserDefaults` keys `rules.v1` (JSON array of `Rule`), `usage.v1` (JSON `[String: Int]` open counts), and `hiddenBrowsers.v1` (JSON `[String]` hidden bundle IDs). Versioned keys allow future migration; AppKit auto-persists window frame.
 
 ## 5. Logic
 - **Algos:**
@@ -70,6 +76,7 @@ flowchart LR
   - `matchingBrowser(for:)` — keep rules where `Domain.host(host, matchesRule: rule.domain)` (exact or any subdomain), sort by descending `domain.count` (longest-domain wins), return first whose browser is installed.
   - `refreshBrowsers()` — keep only apps in the intersection of `http` and `https` URL handlers (filters out non-browsers that merely registered `https`), then order via `BrowserRanking.sorted(_, counts: usageCounts)`.
   - Queue — `handleIncoming` appends the unmatched URL to `pendingURLs` and raises the picker only when the queue was empty; `choose`/`cancelPending` call `advanceQueue()` which pops the head and either shows the next link or closes. `open()` calls `recordUse()` (increment + persist `usage.v1`, re-sort).
+  - Picker visibility — `pickerBrowsers` = `BrowserVisibility.visible(browsers, hidden: hiddenBrowserIDs)` re-ranked by frequency; `setBrowserHidden(id, hidden)` mutates+persists `hiddenBrowsers.v1` but early-returns when `!canHideBrowser(id)` (last-visible guard). `browsers` (all real) is left intact, so rule dropdowns can still surface a rule's hidden/uninstalled target.
 - **Rules:** Matched link opens via `NSWorkspace.open([url], withApplicationAt:)` (activates target). Unmatched → FIFO-queue (`pendingURLs`), raise borderless picker at cursor; remembering stores `Domain.registrable`. Default-browser change goes through the system consent dialog; status reflected back to UI.
 
 ## 6. Non-Functional

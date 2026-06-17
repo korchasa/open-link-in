@@ -21,6 +21,11 @@ final class AppStore: ObservableObject {
     /// Per-browser open counts, used to order the picker by frequency.
     @Published private(set) var usageCounts: [String: Int] = [:]
 
+    /// Bundle IDs the user has hidden from the picker grid. Stored as the
+    /// hidden set (not the visible one) so newly installed browsers show by
+    /// default. [REF:fr:browser-visibility]
+    @Published private(set) var hiddenBrowserIDs: Set<String> = []
+
     /// Toggling this registers/unregisters the app as a login item via the
     /// modern ServiceManagement API (the Apple-sanctioned replacement for the
     /// deprecated SMLoginItemSetEnabled).
@@ -36,11 +41,13 @@ final class AppStore: ObservableObject {
 
     private let defaultsKey = "rules.v1"
     private let usageKey = "usage.v1"
+    private let hiddenKey = "hiddenBrowsers.v1"
     private var ownBundleID: String { Bundle.main.bundleIdentifier ?? "dev.korchasa.SmartLinksOpener" }
 
     private init() {
         loadRules()
         loadUsage()
+        loadHidden()
         refreshBrowsers()
         // Direct assignment in init does not fire the didSet observer.
         launchAtLogin = (SMAppService.mainApp.status == .enabled)
@@ -76,6 +83,12 @@ final class AppStore: ObservableObject {
     private func handlerBundleIDs(forScheme scheme: String) -> [String] {
         NSWorkspace.shared.urlsForApplications(toOpen: URL(string: "\(scheme)://example.com")!)
             .compactMap { Bundle(url: $0)?.bundleIdentifier }
+    }
+
+    /// Browsers the picker renders: visible (non-hidden) browsers ordered by
+    /// usage frequency. [REF:fr:browser-visibility]
+    var pickerBrowsers: [Browser] {
+        BrowserRanking.sorted(BrowserVisibility.visible(browsers, hidden: hiddenBrowserIDs), counts: usageCounts)
     }
 
     func browser(forBundleID id: String) -> Browser? {
@@ -117,6 +130,35 @@ final class AppStore: ObservableObject {
             UserDefaults.standard.set(data, forKey: usageKey)
         }
         browsers = BrowserRanking.sorted(browsers, counts: usageCounts)
+    }
+
+    // MARK: - Picker visibility
+
+    private func loadHidden() {
+        if let data = UserDefaults.standard.data(forKey: hiddenKey),
+            let decoded = try? JSONDecoder().decode([String].self, from: data)
+        {
+            hiddenBrowserIDs = Set(decoded)
+        }
+    }
+
+    /// Whether `id` may still be hidden without emptying the picker. [REF:fr:browser-visibility]
+    func canHideBrowser(_ id: String) -> Bool {
+        BrowserVisibility.canHide(id, hidden: hiddenBrowserIDs, all: browsers)
+    }
+
+    /// Show/hide a browser in the picker; hiding the last visible one is refused.
+    /// [REF:fr:browser-visibility]
+    func setBrowserHidden(_ id: String, _ hidden: Bool) {
+        if hidden {
+            guard canHideBrowser(id) else { return }
+            hiddenBrowserIDs.insert(id)
+        } else {
+            hiddenBrowserIDs.remove(id)
+        }
+        if let data = try? JSONEncoder().encode(Array(hiddenBrowserIDs)) {
+            UserDefaults.standard.set(data, forKey: hiddenKey)
+        }
     }
 
     func addRule(domain: String, bundleID: String) {
