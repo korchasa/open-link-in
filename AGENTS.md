@@ -106,9 +106,13 @@ Maps source code paths to documentation sections that describe them. Used by com
 - `Sources/SmartLinksOpener/Domain.swift` → SDS §3.6 (Domain resolver), §5 (Logic); SRS FR-SUBDOMAIN, FR-ROUTE
 - `Tests/SmartLinksOpenerTests/DomainTests.swift` → SRS FR-SUBDOMAIN, FR-ROUTE (acceptance)
 - `Sources/SmartLinksOpener/Models.swift` → SDS §4 (Entities)
-- `Resources/Info.plist` → SRS FR-DEFAULT-BROWSER, FR-BACKGROUND-AGENT
+- `Sources/SmartLinksOpener/MenuBarIcon.swift` → SDS §3.11 (Menu-bar icon), §3.1 (Agent shell); SRS FR-APP-ICON
+- `Tests/SmartLinksOpenerTests/MenuBarIconTests.swift` → SRS FR-APP-ICON (render size + full-color acceptance)
+- `Resources/AppIcon.iconset/`, `Resources/AppIcon.icns`, `Resources/AppIcon.svg`, `Resources/AppIcon-1024.png` → SDS §7 (App icon pipeline); SRS FR-APP-ICON
+- `documents/assets/appstore/*.png` → SRS FR-DIST.MAS, FR-APP-ICON (App Store screenshots); documents/appstore-listing.md
+- `Resources/Info.plist` → SRS FR-DEFAULT-BROWSER, FR-BACKGROUND-AGENT, FR-APP-ICON
 - `Resources/*.lproj/Localizable.strings` → SRS FR-I18N
-- `build.sh` → Development Commands; SRS FR-DIST, FR-DIST.MAS
+- `build.sh` → Development Commands; SRS FR-DIST, FR-DIST.MAS, FR-APP-ICON (`icon` subcommand)
 - `Resources/SmartLinksOpener.entitlements` → SRS FR-DIST (Developer ID build)
 - `Resources/SmartLinksOpener.appstore.entitlements` → SRS FR-DIST.MAS (sandboxed App Store build)
 - `LICENSE` / `CONTRIBUTING.md` → SRS FR-DIST (GPL-3.0-or-later + CLA)
@@ -329,6 +333,7 @@ When the root cause is outside your control (missing API keys/URLs, missing gene
 - `./build.sh dev` — run the executable directly via `swift run` (Ctrl-C to stop).
 - `./build.sh prod` (default, also `./build.sh` / `./build.sh build`) — compile release, assemble `SmartLinksOpener.app`, sign (Hardened Runtime, ad-hoc), register with LaunchServices.
 - `./build.sh fmt` — auto-format `Sources/` in place via `swift format`.
+- `./build.sh icon` — regenerate `Resources/AppIcon.icns` from `Resources/AppIcon.iconset/` via `iconutil`.
 
 > ⚠️ **Local verification — bundle-id collision.** `prod` and `appstore` builds share `CFBundleIdentifier` `dev.korchasa.SmartLinksOpener`. With both present/running, `open -b dev.korchasa.SmartLinksOpener <url>` may route the Apple Event to a stale instance (e.g. an old picker still showing non-browsers). Before launch-testing: `pkill -9 -f SmartLinksOpener`, keep a single `.app` on disk, and `lsregister -u <path>` the other if it lingers in LaunchServices. Verify with `pgrep -fl SmartLinksOpener` (expect exactly one).
 

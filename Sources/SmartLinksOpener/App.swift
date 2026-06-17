@@ -7,9 +7,14 @@ struct SmartLinksOpenerApp: App {
     @StateObject private var store = AppStore.shared
 
     var body: some Scene {
-        // The only persistent UI of a background agent: a menu-bar item.
-        MenuBarExtra("Smart Links Opener", systemImage: "link.circle.fill") {
+        // The only persistent UI of a background agent: a menu-bar item, badged
+        // with the full-color brand icon. [REF:fr:app-icon]
+        MenuBarExtra {
             MenuContent(store: store)
+        } label: {
+            Image(nsImage: MenuBarIcon.statusItem())
+                .renderingMode(.original)
+                .accessibilityLabel(Text("Smart Links Opener"))
         }
     }
 }

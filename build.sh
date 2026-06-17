@@ -4,6 +4,7 @@
 # Standard interface (flowai): check / test / dev / prod.
 #   ./build.sh prod      Build + bundle + sign (Developer ID) + register .app (default, open-source build)
 #   ./build.sh appstore  Build the sandboxed Mac App Store variant (SmartLinksOpener-AppStore.app)
+#   ./build.sh icon      Regenerate Resources/AppIcon.icns from Resources/AppIcon.iconset/
 #   ./build.sh check     build + comment-scan + format check + tests (verification gate)
 #   ./build.sh test      Run the test suite (optionally a filter: ./build.sh test <name>)
 #   ./build.sh dev       Run the executable directly via `swift run`
@@ -135,6 +136,14 @@ cmd_dev() {
     swift run "$BIN"
 }
 
+# --- icon: regenerate AppIcon.icns from the committed iconset source ---------
+cmd_icon() {
+    # [REF:fr:app-icon] — the brand .icns is reproducible from Resources/AppIcon.iconset.
+    echo "==> Generating Resources/AppIcon.icns from Resources/AppIcon.iconset"
+    iconutil -c icns "Resources/AppIcon.iconset" -o "Resources/AppIcon.icns"
+    echo "==> Done: Resources/AppIcon.icns"
+}
+
 # --- format: auto-format in place (helper) -----------------------------------
 cmd_fmt() {
     swift format --in-place --recursive Sources
@@ -144,12 +153,13 @@ cmd_fmt() {
 case "${1:-prod}" in
     prod|build)  cmd_prod ;;
     appstore)    cmd_appstore ;;
+    icon)        cmd_icon ;;
     check)       cmd_check ;;
     test)        shift; cmd_test "$@" ;;
     dev)         cmd_dev ;;
     fmt|format)  cmd_fmt ;;
     *)
-        echo "Usage: ./build.sh [prod|appstore|check|test|dev|fmt]" >&2
+        echo "Usage: ./build.sh [prod|appstore|icon|check|test|dev|fmt]" >&2
         exit 2
         ;;
 esac

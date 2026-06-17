@@ -73,7 +73,12 @@ Smart Links Opener открывает каждую ссылку в том бра
 - **What's New (release notes):** Первый релиз.
 
 ## Screenshots (required, ≥1; macOS 1280×800 or 2560×1600)
-Capture from the running app:
-1. Rules window with a few example rules (e.g. `github.com → Safari`, `figma.com → Chrome`).
-2. The browser picker for an unmatched link.
-Take with `Cmd-Shift-4` then space (window capture), or `screencapture -ow`.
+Prepared assets (1280×800) committed under `documents/assets/appstore/`:
+1. `screenshot-1.png`
+2. `screenshot-2.png`
+3. `screenshot-3.png`
+
+To re-capture from the running app: rules window with example rules
+(e.g. `github.com → Safari`, `figma.com → Chrome`) and the browser picker for an
+unmatched link. Take with `Cmd-Shift-4` then space (window capture), or
+`screencapture -ow`.

@@ -90,6 +90,13 @@
 - **Acceptance:** `./build.sh appstore && codesign -d --entitlements - SmartLinksOpener-AppStore.app 2>&1 | grep -q app-sandbox`. App Store upload/pricing: `manual — maintainer — documents/tasks/2026/06/open-source-and-appstore.md`.
 - **Status:** [x] (build) / [ ] (uploaded & priced — maintainer step)
 
+### 3.13 FR-APP-ICON: Brand app icon & menu-bar branding [ANC:fr:app-icon]
+- **Desc:** Ships the final brand icon, reproducible from committed source (`Resources/AppIcon.iconset/` → `Resources/AppIcon.icns` via `./build.sh icon`), carrying the 1024px (512@2x) representation App Store validation requires; the vector source (`AppIcon.svg`) and 1024 master (`AppIcon-1024.png`) are committed for re-export and App Store Connect upload. The same brand icon renders in the menu bar (full-color, fixed size) instead of a system glyph.
+- **Tasks:** [REF:task:2026-06-finalize-app-icon-branding | finalize-app-icon-branding]
+- **Scenario:** `./build.sh icon` regenerates the `.icns` from the iconset → `./build.sh prod` bundles it → Finder/Dock/App Store show the brand icon; the menu-bar item shows the brand icon.
+- **Acceptance:** `./build.sh test MenuBarIconTests`; `./build.sh icon && iconutil -c iconset Resources/AppIcon.icns -o /tmp/i.iconset && sips -g pixelWidth /tmp/i.iconset/icon_512x512@2x.png | grep -q 1024`; `test -f Resources/AppIcon-1024.png`.
+- **Status:** [ ]
+
 ---
 
 ## 4. Non-Functional
