@@ -10,8 +10,16 @@ final class AppStore: ObservableObject {
 
     @Published var rules: [Rule] = []
     @Published var browsers: [Browser] = []
-    @Published var pendingURL: URL?
     @Published var statusMessage: String?
+
+    /// FIFO queue of links awaiting a picker decision, so a burst of links from
+    /// another app is never silently dropped. [REF:fr:picker]
+    @Published private var pendingURLs: [URL] = []
+    var pendingURL: URL? { pendingURLs.first }
+    var pendingCount: Int { pendingURLs.count }
+
+    /// Per-browser open counts, used to order the picker by frequency.
+    @Published private(set) var usageCounts: [String: Int] = [:]
 
     /// Toggling this registers/unregisters the app as a login item via the
     /// modern ServiceManagement API (the Apple-sanctioned replacement for the
@@ -27,10 +35,12 @@ final class AppStore: ObservableObject {
     var onClosePicker: (() -> Void)?
 
     private let defaultsKey = "rules.v1"
+    private let usageKey = "usage.v1"
     private var ownBundleID: String { Bundle.main.bundleIdentifier ?? "dev.korchasa.SmartLinksOpener" }
 
     private init() {
         loadRules()
+        loadUsage()
         refreshBrowsers()
         // Direct assignment in init does not fire the didSet observer.
         launchAtLogin = (SMAppService.mainApp.status == .enabled)
@@ -42,23 +52,30 @@ final class AppStore: ObservableObject {
 
     // MARK: - Browsers
 
-    /// Ask LaunchServices which apps can open web URLs, minus ourselves.
+    /// Real web browsers only: apps that handle BOTH `http` and `https` (a plain
+    /// `https` query also returns non-browsers that registered the scheme). Sorted
+    /// by usage frequency. [REF:fr:picker]
     func refreshBrowsers() {
-        let probe = URL(string: "https://example.com")!
-        let urls = NSWorkspace.shared.urlsForApplications(toOpen: probe)
+        let httpsIDs = Set(handlerBundleIDs(forScheme: "https"))
+        let httpURLs = NSWorkspace.shared.urlsForApplications(toOpen: URL(string: "http://example.com")!)
 
         var result: [Browser] = []
         var seen = Set<String>()
-        for u in urls {
+        for u in httpURLs {
             guard let bundle = Bundle(url: u), let bid = bundle.bundleIdentifier else { continue }
             if bid == ownBundleID { continue }
+            guard httpsIDs.contains(bid) else { continue }  // must also handle https
             guard seen.insert(bid).inserted else { continue }
             let name = FileManager.default.displayName(atPath: u.path)
                 .replacingOccurrences(of: ".app", with: "")
             result.append(Browser(name: name, bundleID: bid, appURL: u))
         }
-        result.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-        browsers = result
+        browsers = BrowserRanking.sorted(result, counts: usageCounts)
+    }
+
+    private func handlerBundleIDs(forScheme scheme: String) -> [String] {
+        NSWorkspace.shared.urlsForApplications(toOpen: URL(string: "\(scheme)://example.com")!)
+            .compactMap { Bundle(url: $0)?.bundleIdentifier }
     }
 
     func browser(forBundleID id: String) -> Browser? {
@@ -82,6 +99,24 @@ final class AppStore: ObservableObject {
         if let data = try? JSONEncoder().encode(rules) {
             UserDefaults.standard.set(data, forKey: defaultsKey)
         }
+    }
+
+    // MARK: - Usage frequency
+
+    private func loadUsage() {
+        if let data = UserDefaults.standard.data(forKey: usageKey),
+            let decoded = try? JSONDecoder().decode([String: Int].self, from: data)
+        {
+            usageCounts = decoded
+        }
+    }
+
+    private func recordUse(_ bundleID: String) {
+        usageCounts[bundleID, default: 0] += 1
+        if let data = try? JSONEncoder().encode(usageCounts) {
+            UserDefaults.standard.set(data, forKey: usageKey)
+        }
+        browsers = BrowserRanking.sorted(browsers, counts: usageCounts)
     }
 
     func addRule(domain: String, bundleID: String) {
@@ -134,6 +169,7 @@ final class AppStore: ObservableObject {
     // MARK: - Opening
 
     func open(_ url: URL, in browser: Browser) {
+        recordUse(browser.bundleID)
         let cfg = NSWorkspace.OpenConfiguration()
         cfg.activates = true
         NSWorkspace.shared.open(
@@ -143,14 +179,15 @@ final class AppStore: ObservableObject {
 
     /// Entry point for an incoming link from the system. The app stays resident
     /// in the background afterwards — matched links open silently, unmatched
-    /// links raise the picker.
+    /// links are queued and raise the picker.
     func handleIncoming(_ url: URL) {
         if let b = matchingBrowser(for: url) {
             open(url, in: b)
-        } else {
-            pendingURL = url
-            onShowPicker?()
+            return
         }
+        let wasEmpty = pendingURLs.isEmpty
+        pendingURLs.append(url)
+        if wasEmpty { onShowPicker?() }
     }
 
     func choose(_ browser: Browser, for url: URL, remember: Bool) {
@@ -158,13 +195,21 @@ final class AppStore: ObservableObject {
             addRule(domain: domain, bundleID: browser.bundleID)
         }
         open(url, in: browser)
-        pendingURL = nil
-        onClosePicker?()
+        advanceQueue()
     }
 
     func cancelPending() {
-        pendingURL = nil
-        onClosePicker?()
+        advanceQueue()
+    }
+
+    /// Drop the handled link and either show the next queued one or close.
+    private func advanceQueue() {
+        if !pendingURLs.isEmpty { pendingURLs.removeFirst() }
+        if pendingURLs.isEmpty {
+            onClosePicker?()
+        } else {
+            onShowPicker?()
+        }
     }
 
     // MARK: - Login item

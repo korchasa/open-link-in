@@ -19,3 +19,6 @@
 "Failed: %@" = "Fehlgeschlagen: %@";
 "Change not confirmed." = "Änderung nicht bestätigt.";
 "Launch at login: %@" = "Beim Anmelden starten: %@";
+"Open in…" = "Öffnen in…";
+"Remember for %@" = "Für %@ merken";
+"Open once" = "Einmal öffnen";

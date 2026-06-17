@@ -19,3 +19,6 @@
 "Failed: %@" = "失败：%@";
 "Change not confirmed." = "更改未确认。";
 "Launch at login: %@" = "登录时启动：%@";
+"Open in…" = "在以下打开…";
+"Remember for %@" = "记住 %@";
+"Open once" = "仅打开一次";

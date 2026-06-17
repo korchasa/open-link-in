@@ -116,20 +116,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let url = store.pendingURL else { return }
         closePicker()
         let host = NSHostingController(rootView: PickerView(url: url).environmentObject(store))
-        let window = NSWindow(contentViewController: host)
-        window.title = String(localized: "Choose browser")
-        window.styleMask = [.titled, .closable]
-        window.isReleasedWhenClosed = false
-        window.setContentSize(NSSize(width: 460, height: 440))
-        window.center()
-        window.level = .floating
-        pickerWindow = window
+        let panel = PickerPanel(contentViewController: host)
+        panel.styleMask = [.borderless, .nonactivatingPanel]
+        panel.isReleasedWhenClosed = false
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.level = .floating
+        panel.isMovableByWindowBackground = true
+        panel.setContentSize(host.view.fittingSize)
+        positionNearCursor(panel)
+        pickerWindow = panel
         NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
+        panel.makeKeyAndOrderFront(nil)
+    }
+
+    /// Anchor the panel's top-left corner just right of and below the cursor, so
+    /// it reads as a popover hanging off the link the user clicked, then clamp it
+    /// fully inside the active screen's visible frame.
+    private func positionNearCursor(_ window: NSWindow) {
+        let mouse = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main
+        let size = window.frame.size
+        var x = mouse.x + 12
+        var y = mouse.y - 8 - size.height
+        if let vf = screen?.visibleFrame {
+            x = min(max(vf.minX + 8, x), vf.maxX - size.width - 8)
+            y = min(max(vf.minY + 8, y), vf.maxY - size.height - 8)
+        }
+        window.setFrameOrigin(NSPoint(x: x, y: y))
     }
 
     func closePicker() {
         pickerWindow?.orderOut(nil)
         pickerWindow = nil
     }
+}
+
+/// Borderless panel that can still become key (so the picker receives keystrokes).
+final class PickerPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
 }

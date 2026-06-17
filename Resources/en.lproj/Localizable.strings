@@ -19,3 +19,6 @@
 "Failed: %@" = "Failed: %@";
 "Change not confirmed." = "Change not confirmed.";
 "Launch at login: %@" = "Launch at login: %@";
+"Open in…" = "Open in…";
+"Remember for %@" = "Remember for %@";
+"Open once" = "Open once";

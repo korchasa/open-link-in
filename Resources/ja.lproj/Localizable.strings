@@ -19,3 +19,6 @@
 "Failed: %@" = "失敗しました: %@";
 "Change not confirmed." = "変更は確認されませんでした。";
 "Launch at login: %@" = "ログイン時に起動: %@";
+"Open in…" = "開く先…";
+"Remember for %@" = "%@ を記憶する";
+"Open once" = "一度だけ開く";

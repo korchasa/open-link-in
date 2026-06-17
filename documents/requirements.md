@@ -29,9 +29,9 @@
 - **Status:** [x]
 
 ### 3.3 FR-PICKER: Browser picker for unmatched links [ANC:fr:picker]
-- **Desc:** When no rule matches, show a floating picker of installed browsers; selecting one opens the link; optional "remember" creates a rule for the domain.
-- **Scenario:** Open `https://news.ycombinator.com` with no rule → picker appears → pick Firefox + remember → opens Firefox and stores rule.
-- **Acceptance:** `manual — maintainer — picker window "Choose browser" appears for an unmatched link; "remember" adds a rule visible in the rules window`.
+- **Desc:** When no rule matches, a compact borderless panel pops at the cursor for every such link. It lists **only real browsers** (apps handling both `http` and `https`) as an icon grid ordered **most-used first**, with 1–9 quick-keys, arrow-key navigation, Return to open, Esc to cancel. "Remember for <domain>" is ON by default and shown explicitly (toggles to "Open once"). Concurrent unmatched links are FIFO-queued (depth shown as a "+N" badge), never dropped.
+- **Scenario:** Open `https://news.ycombinator.com` with no rule → panel appears at cursor → press `1` (or click) with remember ON → opens the most-used browser and stores a rule; a second link opened meanwhile waits in queue and is shown next.
+- **Acceptance:** automated — `./build.sh test BrowserRankingTests` (frequency ordering); `manual — maintainer — borderless panel pops at cursor for an unmatched link; only real browsers listed; 1–9/arrows/Return/Esc work; remember ON by default adds a rule; a burst of links is queued, not dropped`.
 - **Status:** [x]
 
 ### 3.4 FR-RULES-MGMT: Manage rules [ANC:fr:rules-mgmt]
@@ -59,7 +59,7 @@
 - **Status:** [x]
 
 ### 3.8 FR-PERSIST: Persist rules [ANC:fr:persist]
-- **Desc:** Rules stored in `UserDefaults` (key `rules.v1`) as `Codable`→JSON; survive relaunch.
+- **Desc:** Rules stored in `UserDefaults` (key `rules.v1`) as `Codable`→JSON; per-browser open counts under `usage.v1` (drives picker frequency order); both survive relaunch.
 - **Scenario:** Add a rule → quit → relaunch → rule present.
 - **Acceptance:** `defaults read dev.korchasa.SmartLinksOpener rules.v1` returns the stored rules blob after a rule is added.
 - **Status:** [x]
