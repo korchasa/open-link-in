@@ -256,7 +256,7 @@ struct RulesView: View {
                         .foregroundStyle(.secondary)
                 }
                 Text(verbatim: rule.domain)
-                    .font(.system(size: 13.5, weight: .medium))
+                    .font(.system(size: 13.5, weight: .regular))
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
