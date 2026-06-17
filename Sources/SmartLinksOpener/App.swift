@@ -51,7 +51,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let store = AppStore.shared
     private var rulesWindow: NSWindow?
     private var pickerWindow: NSWindow?
-    private var handledURLAtLaunch = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Run as a background agent: no Dock icon, no app-switcher entry.
@@ -68,14 +67,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.onShowPicker = { [weak self] in self?.showPicker() }
         store.onClosePicker = { [weak self] in self?.closePicker() }
 
-        // Launched by the user (not by a link) → reveal the rules window so the
-        // app isn't invisible on first run.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-            guard let self else { return }
-            if !self.handledURLAtLaunch && self.pickerWindow == nil {
-                self.showRules()
-            }
-        }
+        // Start minimized: stay resident in the menu bar with no window. The
+        // menu-bar item is the persistent UI; the rules window opens on demand
+        // (menu, Dock/Finder reopen) — never automatically at launch.
+        // [REF:fr:background-agent]
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -88,7 +83,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func handleGetURL(_ event: NSAppleEventDescriptor, withReplyEvent reply: NSAppleEventDescriptor) {
-        handledURLAtLaunch = true
         guard let str = event.paramDescriptor(forKeyword: AEKeyword(keyDirectObject))?.stringValue,
             let url = URL(string: str)
         else { return }
@@ -101,7 +95,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// leaving `odoc` to AppKit). Routed through the same picker flow; a file
     /// has no domain, so no rule is created. [REF:fr:file-open]
     func application(_ application: NSApplication, open urls: [URL]) {
-        handledURLAtLaunch = true
         for url in urls { store.handleIncoming(url) }
     }
 

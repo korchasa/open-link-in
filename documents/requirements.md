@@ -55,7 +55,7 @@
 - **Status:** [x]
 
 ### 3.5 FR-BACKGROUND-AGENT: Background menu-bar agent [ANC:fr:background-agent]
-- **Desc:** Runs as `LSUIElement` accessory: no Dock icon, menu-bar control, never self-terminates after routing; matched links do not steal focus.
+- **Desc:** Runs as `LSUIElement` accessory: no Dock icon, menu-bar control, never self-terminates after routing; matched links do not steal focus; starts minimized — no window opens automatically at launch (rules window is on-demand only).
 - **Scenario:** Route a link → app PID unchanged (resident); no Dock icon present.
 - **Acceptance:** `plutil -extract LSUIElement raw SmartLinksOpener.app/Contents/Info.plist` = `true`; after `open -b … <url>` the process from `pgrep -x SmartLinksOpener` is unchanged.
 - **Status:** [x]
