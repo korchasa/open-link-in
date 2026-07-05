@@ -61,6 +61,17 @@ enum Snapshot {
                 .shadow(color: .black.opacity(0.35), radius: 40, y: 18)
         }
         try shoot(rules, to: dir.appendingPathComponent("02-rules.png"))
+
+        // 03 — the picker in one-time "open once" mode (orange accent, no rule).
+        let onceURL = URL(string: "https://youtube.com/watch?v=dequ")!
+        let pickerOnce = backdrop {
+            PickerView(url: onceURL, shiftHeld: true)
+                .environmentObject(store)
+                .background(Color(nsColor: .windowBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .shadow(color: .black.opacity(0.35), radius: 40, y: 18)
+        }
+        try shoot(pickerOnce, to: dir.appendingPathComponent("03-picker-once.png"))
     }
 
     /// In-memory demo content: keep only well-known browsers (the build machine

@@ -13,6 +13,13 @@ struct PickerView: View {
     @State private var selected = 0
     @State private var shiftHeld = false
 
+    /// `shiftHeld` seeds the ⇧ "open once" state; the snapshot mode passes `true`
+    /// to render the orange one-time variant offscreen (no keyboard events there).
+    init(url: URL, shiftHeld: Bool = false) {
+        self.url = url
+        _shiftHeld = State(initialValue: shiftHeld)
+    }
+
     private var browsers: [Browser] { store.pickerBrowsers }
     private var title: String { LinkLabel.title(for: url) }
     /// A local file has no domain → no rule can be created, so the picker is
