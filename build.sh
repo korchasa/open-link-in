@@ -3,7 +3,7 @@
 #
 # Standard interface (flowai): check / test / dev / prod.
 #   ./build.sh prod      Build + bundle + sign (Developer ID) + register .app (default, open-source build)
-#   ./build.sh appstore  Build the sandboxed Mac App Store variant (SmartLinksOpener-AppStore.app)
+#   ./build.sh dist      Build the UNSIGNED Mac App Store bundle (signing done by app-store-factory)
 #   ./build.sh icon      Regenerate Resources/AppIcon.icns from Resources/AppIcon.iconset/
 #   ./build.sh check     build + comment-scan + format check + tests (verification gate)
 #   ./build.sh test      Run the test suite (optionally a filter: ./build.sh test <name>)
@@ -48,50 +48,41 @@ cmd_prod() {
     echo "    Open it once (open $APP), then click 'Set as default browser'."
 }
 
-# --- appstore: sandboxed build for Mac App Store submission ------------------
-cmd_appstore() {
-    local app="SmartLinksOpener-AppStore.app"
-    # Real MAS upload needs "Apple Distribution"/"3rd Party Mac Developer
-    # Application: NAME (TEAMID)". Ad-hoc ("-") is fine to verify the sandbox
-    # locally.
-    local sign="${MAS_APP_IDENTITY:--}"
+# --- dist: UNSIGNED sandboxed bundle for the App Store ------------------------
+# Signing (codesign with the distribution identity, embedding the provisioning
+# profile) and .pkg packaging are NOT done here — that is app-store-factory's
+# job. This target only assembles the unsigned bundle. The App Sandbox is
+# declared in Resources/SmartLinksOpener.appstore.entitlements, which the
+# factory applies at signing time.
+cmd_dist() {
+    local out=".build/dist/$APP"
 
     echo "==> Compiling (release)"
     swift build -c release
 
-    echo "==> Assembling $app (App Sandbox)"
-    rm -rf "$app"
-    mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
-    cp ".build/release/$BIN" "$app/Contents/MacOS/$BIN"
-    cp "Resources/Info.plist" "$app/Contents/Info.plist"
+    echo "==> Assembling unsigned $out"
+    rm -rf "$out"
+    mkdir -p "$out/Contents/MacOS" "$out/Contents/Resources"
+    cp ".build/release/$BIN" "$out/Contents/MacOS/$BIN"
+    cp "Resources/Info.plist" "$out/Contents/Info.plist"
     for lproj in Resources/*.lproj; do
-        [ -d "$lproj" ] && cp -R "$lproj" "$app/Contents/Resources/"
+        [ -d "$lproj" ] && cp -R "$lproj" "$out/Contents/Resources/"
     done
-    [ -f "Resources/AppIcon.icns" ] && cp "Resources/AppIcon.icns" "$app/Contents/Resources/"
+    # App Store validation (ITMS-90546) requires the icon as a compiled asset
+    # catalog (Assets.car), not just a loose .icns. actool also emits the .icns.
+    echo "==> Compiling asset catalog (Assets.car + AppIcon.icns)"
+    xcrun actool "Resources/Assets.xcassets" \
+        --compile "$out/Contents/Resources" \
+        --platform macosx --minimum-deployment-target 13.0 \
+        --app-icon AppIcon \
+        --output-partial-info-plist ".build/assetcatalog-info.plist" >/dev/null
+    # Drop the loose AppIcon.icns actool also emits (capped at 256×256). The
+    # App Store icon must come from Assets.car (1024×1024) via CFBundleIconName;
+    # leaving the .icns lets ingest pick the low-res file instead.
+    rm -f "$out/Contents/Resources/AppIcon.icns"
 
-    # Each App Store upload needs a unique, increasing build number (CI sets it).
-    if [ -n "${MAS_BUILD_NUMBER:-}" ]; then
-        /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${MAS_BUILD_NUMBER}" "$app/Contents/Info.plist"
-        echo "    CFBundleVersion = ${MAS_BUILD_NUMBER}"
-    fi
-
-    # Embedded provisioning profile — required for a real MAS upload.
-    if [ -n "${MAS_PROVISION_PROFILE:-}" ] && [ -f "${MAS_PROVISION_PROFILE:-}" ]; then
-        cp "$MAS_PROVISION_PROFILE" "$app/Contents/embedded.provisionprofile"
-    fi
-
-    echo "==> Signing with App Sandbox entitlements (identity: $sign)"
-    codesign --force \
-        --entitlements "Resources/SmartLinksOpener.appstore.entitlements" \
-        --sign "$sign" "$app"
-
-    echo "==> Done: $PWD/$app (sandboxed)"
-    if [ "$sign" = "-" ]; then
-        echo "    NOTE: ad-hoc signed — LOCAL sandbox test only, NOT uploadable."
-        echo "    For the real Mac App Store build set MAS_APP_IDENTITY +"
-        echo "    MAS_PROVISION_PROFILE, then package with productbuild."
-        echo "    Full playbook: documents/tasks/2026/06/open-source-and-appstore.md"
-    fi
+    echo "==> Done (unsigned): $PWD/$out"
+    echo "    Signing + .pkg packaging are handled by app-store-factory."
 }
 
 # --- check: the comprehensive verification gate ------------------------------
@@ -175,14 +166,14 @@ cmd_fmt() {
 
 case "${1:-prod}" in
     prod|build)  cmd_prod ;;
-    appstore)    cmd_appstore ;;
+    dist)        cmd_dist ;;
     icon)        cmd_icon ;;
     check)       cmd_check ;;
     test)        shift; cmd_test "$@" ;;
     dev)         cmd_dev ;;
     fmt|format)  cmd_fmt ;;
     *)
-        echo "Usage: ./build.sh [prod|appstore|icon|check|test|dev|fmt]" >&2
+        echo "Usage: ./build.sh [prod|dist|icon|check|test|dev|fmt]" >&2
         exit 2
         ;;
 esac

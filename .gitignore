@@ -15,5 +15,8 @@ Package.resolved
 build/
 dist/
 
+# Local tool state (FoxCode browser automation sessions) — not source.
+.foxcode/
+
 # macOS
 .DS_Store

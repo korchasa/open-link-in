@@ -25,12 +25,14 @@
     <string>dev.korchasa.SmartLinksOpener</string>
     <key>CFBundleExecutable</key>
     <string>SmartLinksOpener</string>
-    <key>CFBundleIconFile</key>
-    <string>AppIcon</string>
+    <!-- App Store icon comes from the compiled asset catalog (Assets.car) via
+         CFBundleIconName. No CFBundleIconFile: the loose AppIcon.icns caps at
+         256×256, and when referenced App Store ingest picks it over the
+         catalog's 1024×1024 marketing icon, leaving the listing icon blank. -->
     <key>CFBundleIconName</key>
     <string>AppIcon</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>3</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundlePackageType</key>

@@ -58,6 +58,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var pickerWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // `--snapshot <dir>` renders App Store screenshots offscreen and exits;
+        // skip the normal launch path entirely.
+        if Snapshot.runIfRequested() { return }
         // Run as a background agent: no Dock icon, no app-switcher entry.
         NSApp.setActivationPolicy(.accessory)
 
