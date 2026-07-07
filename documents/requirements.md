@@ -1,7 +1,7 @@
 # SRS
 
 ## 1. Intro
-- **Desc:** Smart Links Opener — macOS default-browser agent that routes web links to a browser chosen per domain; offers a picker + rule creation when no rule matches.
+- **Desc:** Reroute — macOS default-browser agent that routes web links to a browser chosen per domain; offers a picker + rule creation when no rule matches.
 - **Def/Abbr:** FR = functional requirement; rule = domain→browser mapping; agent = background `LSUIElement` app; bundleID = app bundle identifier.
 
 ## 2. General

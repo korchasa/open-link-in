@@ -1,4 +1,4 @@
-# Smart Links Opener
+# Reroute
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![CI](https://github.com/korchasa/open-link-in/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
@@ -93,9 +93,9 @@ ad-hoc подписью и регистрирует бандл в LaunchServices
 2. В окне приложения нажмите **«Сделать браузером по умолчанию»**.
    macOS покажет системный запрос на подтверждение — подтвердите.
    Либо вручную: *Системные настройки → Рабочий стол и Dock → Веб-браузер по
-   умолчанию → Smart Links Opener*.
+   умолчанию → Reroute*.
 
-После этого любой клик по ссылке вне браузера попадёт в Smart Links Opener,
+После этого любой клик по ссылке вне браузера попадёт в Reroute,
 который мгновенно перенаправит её в нужный браузер либо предложит выбрать.
 
 ## Как это устроено

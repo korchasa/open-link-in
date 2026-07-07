@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>Smart Links Opener</string>
+    <string>Reroute</string>
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleLocalizations</key>
@@ -20,7 +20,7 @@
         <string>zh-Hans</string>
     </array>
     <key>CFBundleDisplayName</key>
-    <string>Smart Links Opener</string>
+    <string>Reroute</string>
     <key>CFBundleIdentifier</key>
     <string>dev.korchasa.SmartLinksOpener</string>
     <key>CFBundleExecutable</key>
@@ -49,7 +49,7 @@
     <key>LSUIElement</key>
     <true/>
     <key>NSHumanReadableCopyright</key>
-    <string>Smart Links Opener</string>
+    <string>© 2026 korchasa</string>
     <!-- Declares the app as a handler for web links, so macOS lists it as a browser. -->
     <key>CFBundleURLTypes</key>
     <array>

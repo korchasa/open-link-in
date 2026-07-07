@@ -17,13 +17,13 @@ Fill the App Store Connect form with the fields below. Two locales: English
 
 ## English (en-US)
 
-- **Name (≤30):** Smart Links Opener
+- **Name (≤30):** Reroute: Smart Links Opener
 - **Subtitle (≤30):** Open links per-domain
 - **Keywords (≤100):** browser,default browser,link,router,picker,domain,open in,chrome,safari,firefox,switch
 - **Promotional text (≤170):** Send every link to the right browser automatically. Set a rule per domain — work links to one browser, personal to another — or pick on the fly.
 - **Description:**
 ```
-Smart Links Opener makes your Mac open each link in the browser you actually want.
+Reroute makes your Mac open each link in the browser you actually want.
 
 Set it as your default browser, and instead of forcing every link into one app, it
 routes links by domain: work sites to one browser, personal to another, a client's
@@ -45,13 +45,13 @@ This App Store build is the convenient, signed, auto-updating version.
 
 ## Russian (ru)
 
-- **Name (≤30):** Smart Links Opener
+- **Name (≤30):** Reroute: Smart Links Opener
 - **Subtitle (≤30):** Ссылки по доменам
 - **Keywords (≤100):** браузер,ссылка,домен,маршрут,выбор,открыть в,chrome,safari,firefox,по умолчанию,переключить
 - **Promotional text (≤170):** Каждая ссылка открывается в нужном браузере автоматически. Задайте правило для домена — рабочее в один браузер, личное в другой — или выбирайте на лету.
 - **Description:**
 ```
-Smart Links Opener открывает каждую ссылку в том браузере, который вам нужен.
+Reroute открывает каждую ссылку в том браузере, который вам нужен.
 
 Назначьте приложение браузером по умолчанию — и вместо того чтобы загонять все
 ссылки в одно приложение, оно маршрутизирует их по домену: рабочие сайты в один

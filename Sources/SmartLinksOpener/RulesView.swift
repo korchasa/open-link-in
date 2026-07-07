@@ -51,7 +51,7 @@ struct RulesView: View {
                         .foregroundStyle(.white)
                 )
                 .shadow(color: Color(red: 1.0, green: 0.18, blue: 0.33).opacity(0.34), radius: 3, y: 2)
-            Text("Smart Links Opener")
+            Text("Reroute")
                 .font(.system(size: 13.5, weight: .bold))
                 .fixedSize(horizontal: false, vertical: true)
         }

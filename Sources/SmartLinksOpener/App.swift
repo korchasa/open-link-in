@@ -14,7 +14,7 @@ struct SmartLinksOpenerApp: App {
         } label: {
             Image(nsImage: MenuBarIcon.statusItem())
                 .renderingMode(.original)
-                .accessibilityLabel(Text("Smart Links Opener"))
+                .accessibilityLabel(Text("Reroute"))
         }
     }
 }
@@ -112,7 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if rulesWindow == nil {
             let host = NSHostingController(rootView: RulesView().environmentObject(store))
             let window = NSWindow(contentViewController: host)
-            window.title = "Smart Links Opener"
+            window.title = "Reroute"
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.isReleasedWhenClosed = false
             window.minSize = NSSize(width: 560, height: 420)

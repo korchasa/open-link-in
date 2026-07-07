@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in Smart Links Opener.
+Thanks for your interest in Reroute.
 
 ## License of the project
 

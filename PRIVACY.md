@@ -1,8 +1,8 @@
-# Privacy Policy — Smart Links Opener
+# Privacy Policy — Reroute
 
 _Last updated: 2026-06-17_
 
-Smart Links Opener is designed to collect **no personal data whatsoever**.
+Reroute is designed to collect **no personal data whatsoever**.
 
 ## Data collection
 

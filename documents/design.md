@@ -1,7 +1,7 @@
 # SDS
 
 ## 1. Intro
-- **Purpose:** Describe the implementation of Smart Links Opener — a macOS default-browser routing agent.
+- **Purpose:** Describe the implementation of Reroute — a macOS default-browser routing agent.
 - **Rel to SRS:** Realizes [REF:fr:default-browser], [REF:fr:route], [REF:fr:file-open], [REF:fr:picker], [REF:fr:rules-mgmt], [REF:fr:browser-visibility], [REF:fr:background-agent], [REF:fr:login-item], [REF:fr:i18n], [REF:fr:persist], [REF:fr:dist].
 
 ## 2. Arch

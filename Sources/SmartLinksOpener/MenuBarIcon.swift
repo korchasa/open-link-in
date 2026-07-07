@@ -34,7 +34,7 @@ enum MenuBarIcon {
     static func statusItem() -> NSImage {
         let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
         let source =
-            NSImage(systemSymbolName: "link", accessibilityDescription: "Smart Links Opener")?
+            NSImage(systemSymbolName: "link", accessibilityDescription: "Reroute")?
             .withSymbolConfiguration(config)
             ?? NSImage()
         return render(from: source)

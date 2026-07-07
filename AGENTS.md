@@ -28,7 +28,7 @@
 - **Licensing.** Source is **GPL-3.0-or-later**. The sole copyright holder ships the paid App Store build under the owner-exception; contributions require the `CONTRIBUTING.md` CLA so they can appear in that build. Do not change the license or relicense contributions without the maintainer's decision.
 
 ## Project Information
-- Project Name: Smart Links Opener
+- Project Name: Reroute
 
 ## Project Vision
 A minimalist macOS app that acts as the default web browser and routes every link to the right browser based on its domain. When no rule matches a domain, it offers a picker over installed browsers with a one-click "remember" to create a rule. Runs quietly in the background as a menu-bar agent; native macOS look, standard frameworks only.
