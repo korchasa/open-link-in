@@ -12,6 +12,13 @@ final class AppStore: ObservableObject {
     @Published var browsers: [Browser] = []
     @Published var statusMessage: String?
 
+    /// Whether this app is the system default http(s) handler. Published so the
+    /// UI updates when the default changes; refreshed on app activation, since
+    /// LaunchServices posts no reliable public "default handler changed"
+    /// notification and the user changes it in System Settings (leaving and
+    /// returning to this app). [REF:fr:default-browser]
+    @Published private(set) var isDefault: Bool = false
+
     /// FIFO queue of links awaiting a picker decision, so a burst of links from
     /// another app is never silently dropped. [REF:fr:picker]
     @Published private var pendingURLs: [URL] = []
@@ -49,8 +56,25 @@ final class AppStore: ObservableObject {
         loadUsage()
         loadHidden()
         refreshBrowsers()
+        refreshDefaultBrowserStatus()
         // Direct assignment in init does not fire the didSet observer.
         launchAtLogin = (SMAppService.mainApp.status == .enabled)
+        // Re-check the default handler whenever the app regains focus: the user
+        // changes it in System Settings (or another browser's prompt), then
+        // returns here, and the banner/menu must reflect the new state.
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.refreshDefaultBrowserStatus() }
+        }
+    }
+
+    /// Re-queries LaunchServices for the current default http(s) handler and
+    /// publishes the result. Cheap; safe to call on every activation.
+    func refreshDefaultBrowserStatus() {
+        isDefault = isDefaultBrowser()
     }
 
     func requestShowRules() {
@@ -280,14 +304,14 @@ final class AppStore: ObservableObject {
             NSWorkspace.shared.setDefaultApplication(at: appURL, toOpenURLsWithScheme: "https") { httpsError in
                 DispatchQueue.main.async {
                     let error = httpError ?? httpsError
+                    self?.refreshDefaultBrowserStatus()
                     if let error {
                         self?.statusMessage = String(localized: "Failed: \(error.localizedDescription)")
-                    } else if self?.isDefaultBrowser() == true {
+                    } else if self?.isDefault == true {
                         self?.statusMessage = nil
                     } else {
                         self?.statusMessage = String(localized: "Change not confirmed.")
                     }
-                    self?.objectWillChange.send()
                 }
             }
         }

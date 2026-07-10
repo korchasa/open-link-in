@@ -30,3 +30,7 @@
 "Open & remember" = "Abrir y recordar";
 "Open once — no rule created" = "Abrir una vez: sin crear una regla";
 "open once, without creating a rule" = "abrir una vez, sin crear una regla";
+
+"Reroute isn't your default browser" = "Reroute no es tu navegador predeterminado";
+"Routing rules only work when macOS hands links to Reroute. Until then, every link keeps opening in your usual browser." = "Las reglas solo funcionan cuando macOS envía los enlaces a Reroute. Hasta entonces, todos los enlaces seguirán abriéndose en tu navegador habitual.";
+"macOS will ask you to confirm the change." = "macOS te pedirá que confirmes el cambio.";

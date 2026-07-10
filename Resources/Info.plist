@@ -2,70 +2,64 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleName</key>
-    <string>Reroute</string>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
-    <key>CFBundleLocalizations</key>
-    <array>
-        <string>en</string>
-        <string>ru</string>
-        <string>uk</string>
-        <string>de</string>
-        <string>fr</string>
-        <string>es</string>
-        <string>it</string>
-        <string>pt-BR</string>
-        <string>ja</string>
-        <string>zh-Hans</string>
-    </array>
-    <key>CFBundleDisplayName</key>
-    <string>Reroute</string>
-    <key>CFBundleIdentifier</key>
-    <string>dev.korchasa.SmartLinksOpener</string>
-    <key>CFBundleExecutable</key>
-    <string>SmartLinksOpener</string>
-    <!-- App Store icon comes from the compiled asset catalog (Assets.car) via
-         CFBundleIconName. No CFBundleIconFile: the loose AppIcon.icns caps at
-         256×256, and when referenced App Store ingest picks it over the
-         catalog's 1024×1024 marketing icon, leaving the listing icon blank. -->
-    <key>CFBundleIconName</key>
-    <string>AppIcon</string>
-    <key>CFBundleVersion</key>
-    <string>3</string>
-    <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>LSMinimumSystemVersion</key>
-    <string>13.0</string>
-    <key>LSApplicationCategoryType</key>
-    <string>public.app-category.utilities</string>
-    <key>NSHighResolutionCapable</key>
-    <true/>
-    <key>NSPrincipalClass</key>
-    <string>NSApplication</string>
-    <!-- Runs as a background agent: no Dock icon, controlled from the menu bar. -->
-    <key>LSUIElement</key>
-    <true/>
-    <key>NSHumanReadableCopyright</key>
-    <string>© 2026 korchasa</string>
-    <!-- Declares the app as a handler for web links, so macOS lists it as a browser. -->
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLName</key>
-            <string>Web site URL</string>
-            <key>CFBundleTypeRole</key>
-            <string>Viewer</string>
-            <key>LSHandlerRank</key>
-            <string>Default</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>http</string>
-                <string>https</string>
-            </array>
-        </dict>
-    </array>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Reroute</string>
+	<key>CFBundleExecutable</key>
+	<string>SmartLinksOpener</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>dev.korchasa.SmartLinksOpener</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>ru</string>
+		<string>uk</string>
+		<string>de</string>
+		<string>fr</string>
+		<string>es</string>
+		<string>it</string>
+		<string>pt-BR</string>
+		<string>ja</string>
+		<string>zh-Hans</string>
+	</array>
+	<key>CFBundleName</key>
+	<string>Reroute</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>Web site URL</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>http</string>
+				<string>https</string>
+			</array>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>4</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>© 2026 korchasa</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
 </dict>
 </plist>

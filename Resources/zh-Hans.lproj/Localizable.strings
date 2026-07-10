@@ -30,3 +30,7 @@
 "Open & remember" = "打开并记住";
 "Open once — no rule created" = "仅打开一次 — 不创建规则";
 "open once, without creating a rule" = "仅打开一次，不创建规则";
+
+"Reroute isn't your default browser" = "Reroute 不是系统默认浏览器";
+"Routing rules only work when macOS hands links to Reroute. Until then, every link keeps opening in your usual browser." = "只有当 macOS 将链接交给 Reroute 时，规则才会生效。在此之前，所有链接仍会在你惯用的浏览器中打开。";
+"macOS will ask you to confirm the change." = "macOS 会要求你确认更改。";

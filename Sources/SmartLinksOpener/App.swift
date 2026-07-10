@@ -29,7 +29,7 @@ struct MenuContent: View {
 
         Divider()
 
-        if store.isDefaultBrowser() {
+        if store.isDefault {
             Label("Default browser", systemImage: "checkmark.seal.fill")
         } else {
             Button("Set as default browser") { store.setAsDefaultBrowser() }

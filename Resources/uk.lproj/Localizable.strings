@@ -30,3 +30,7 @@
 "Open & remember" = "Відкрити та запам’ятати";
 "Open once — no rule created" = "Відкрити один раз — правило не створиться";
 "open once, without creating a rule" = "відкрити один раз, без створення правила";
+
+"Reroute isn't your default browser" = "Reroute не є браузером за замовчуванням";
+"Routing rules only work when macOS hands links to Reroute. Until then, every link keeps opening in your usual browser." = "Правила працюють лише тоді, коли macOS передає посилання в Reroute. До того всі посилання відкриватимуться у звичних браузерах.";
+"macOS will ask you to confirm the change." = "macOS попросить підтвердити вибір.";

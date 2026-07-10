@@ -10,15 +10,90 @@ struct RulesView: View {
     @State private var newDomain = ""
     @State private var newBundleID = ""
 
+    /// Blur applied to the window content while Reroute is not the default
+    /// browser — enough to signal "locked" without hiding the data. Constant per
+    /// spec. [REF:fr:default-browser]
+    private let lockedContentBlur: CGFloat = 3
+    /// Opacity of the desaturated content behind the lock overlay.
+    private let lockedContentOpacity: CGFloat = 0.5
+
     var body: some View {
-        HStack(spacing: 0) {
-            sidebar
-            Divider()
-            rulesPane
+        ZStack {
+            // Normal UI stays visible (and current) beneath the lock, so the user
+            // sees their data is intact — but fully greyed out, non-interactive,
+            // and hidden from VoiceOver while Reroute isn't the default browser.
+            HStack(spacing: 0) {
+                sidebar
+                Divider()
+                rulesPane
+            }
+            .saturation(store.isDefault ? 1 : 0)
+            .opacity(store.isDefault ? 1 : lockedContentOpacity)
+            .blur(radius: store.isDefault ? 0 : lockedContentBlur)
+            .disabled(!store.isDefault)
+            .allowsHitTesting(store.isDefault)
+            .accessibilityHidden(!store.isDefault)
+
+            if !store.isDefault {
+                notDefaultOverlay
+                    .transition(.opacity)
+            }
         }
         .frame(minWidth: 560, minHeight: 420)
+        .animation(.easeInOut(duration: 0.25), value: store.isDefault)
         .onAppear {
             if newBundleID.isEmpty { newBundleID = store.pickerBrowsers.first?.bundleID ?? "" }
+        }
+    }
+
+    // MARK: - Locked state (not the system default browser) — [REF:fr:default-browser]
+
+    /// Full-content lock shown while Reroute is not the system default browser:
+    /// routing can't fire, so every control is disabled and the only action is to
+    /// become default. This is a window-content state, not a modal — the window
+    /// still closes/minimizes normally and the title bar stays live.
+    private var notDefaultOverlay: some View {
+        ZStack {
+            // Translucent veil over the whole content area. Adaptive (not a fixed
+            // light fill) so it — and the card's adaptive text — stay legible in
+            // dark mode; a fixed-light surface under adaptive text is exactly what
+            // got 1.0 rejected for contrast.
+            Rectangle()
+                .fill(Color(nsColor: .windowBackgroundColor).opacity(0.6))
+
+            VStack(spacing: 13) {
+                brandTile(size: 56, cornerRadius: 14)
+                    .shadow(
+                        color: Color(red: 1.0, green: 0.18, blue: 0.33).opacity(0.34),
+                        radius: 6, y: 3)
+                Text("Reroute isn't your default browser")
+                    .font(.system(size: 16, weight: .bold))
+                    .multilineTextAlignment(.center)
+                Text(
+                    "Routing rules only work when macOS hands links to Reroute. Until then, every link keeps opening in your usual browser."
+                )
+                .font(.system(size: 12.5))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 320)
+                Button("Set as default browser") { store.setAsDefaultBrowser() }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .keyboardShortcut(.defaultAction)
+                    .padding(.top, 2)
+                Text("macOS will ask you to confirm the change.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(28)
+            .frame(width: 380)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(nsColor: .textBackgroundColor))
+                    .shadow(color: .black.opacity(0.18), radius: 22, y: 10)
+            )
+            .accessibilityElement(children: .contain)
         }
     }
 
@@ -36,20 +111,27 @@ struct RulesView: View {
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
+    /// The Reroute brand tile (pink gradient rounded square + link glyph). Shared
+    /// by the sidebar header and the not-default lock card so both render the same
+    /// mark at any size — and offscreen (it's drawn, not loaded from the icon).
+    private func brandTile(size: CGFloat, cornerRadius: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(
+                LinearGradient(
+                    colors: [Color(red: 1.0, green: 0.36, blue: 0.48), Color(red: 1.0, green: 0.18, blue: 0.33)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing)
+            )
+            .frame(width: size, height: size)
+            .overlay(
+                Image(systemName: "link")
+                    .font(.system(size: size * 0.47, weight: .bold))
+                    .foregroundStyle(.white)
+            )
+    }
+
     private var brandHeader: some View {
         HStack(spacing: 10) {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(red: 1.0, green: 0.36, blue: 0.48), Color(red: 1.0, green: 0.18, blue: 0.33)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing)
-                )
-                .frame(width: 30, height: 30)
-                .overlay(
-                    Image(systemName: "link")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(.white)
-                )
+            brandTile(size: 30, cornerRadius: 8)
                 .shadow(color: Color(red: 1.0, green: 0.18, blue: 0.33).opacity(0.34), radius: 3, y: 2)
             Text("Reroute")
                 .font(.system(size: 13.5, weight: .bold))
@@ -146,7 +228,6 @@ struct RulesView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 15)
                 .padding(.bottom, 11)
-            defaultBrowserBanner
             columnHeader
             rulesList
             Divider()
@@ -154,53 +235,6 @@ struct RulesView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color(nsColor: .textBackgroundColor))
-    }
-
-    // Status of the system default-browser handoff. Until the app is the default,
-    // rules never fire, so the warning is prominent with a one-click fix.
-    // [REF:fr:default-browser]
-    @ViewBuilder
-    private var defaultBrowserBanner: some View {
-        if store.isDefaultBrowser() {
-            HStack(spacing: 7) {
-                Image(systemName: "checkmark.seal.fill")
-                    .foregroundStyle(.green)
-                Text("Default browser in the system")
-                    .font(.system(size: 12.5, weight: .semibold))
-                    .foregroundStyle(.green)
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 10)
-        } else {
-            HStack(alignment: .center, spacing: 12) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 16))
-                    .foregroundStyle(Color(red: 0.72, green: 0.53, blue: 0.04))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Not the system default browser")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text("Rules apply only when macOS hands links to this app.")
-                        .font(.system(size: 11.5))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 8)
-                Button("Make default") { store.setAsDefaultBrowser() }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-            }
-            .padding(11)
-            .background(
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(Color(red: 1.0, green: 0.97, blue: 0.90))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 9, style: .continuous)
-                            .strokeBorder(Color(red: 0.94, green: 0.83, blue: 0.53), lineWidth: 0.5)
-                    )
-            )
-            .padding(.horizontal, 20)
-            .padding(.bottom, 12)
-        }
     }
 
     private var columnHeader: some View {
