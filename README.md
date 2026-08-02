@@ -3,10 +3,9 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![CI](https://github.com/korchasa/open-link-in/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
 
-> Релизы в Mac App Store автоматизированы через GitHub Actions: пуш тега `vX.Y.Z`
-> собирает песочничную сборку, подписывает и загружает её в App Store Connect.
-> Первоначальная настройка (сертификаты, ключи, секреты) — см.
-> [`documents/tasks/2026/06/appstore-cicd-setup.md`](documents/tasks/2026/06/appstore-cicd-setup.md).
+> В этом репозитории есть только проверки (`ci.yml`): сборка, форматирование и
+> тесты. Подпись, упаковка и загрузка в App Store Connect выполняются за его
+> пределами; здесь получается неподписанный бандл (`./build.sh dist`).
 
 Минималистичное macOS-приложение, которое работает как браузер по умолчанию и
 открывает каждую ссылку в нужном браузере в зависимости от домена. Если правило
@@ -35,8 +34,9 @@
 Две конфигурации сборки:
 - `./build.sh prod` — открытая сборка, подпись Developer ID, Hardened Runtime, без
   песочницы (распространение вне App Store: DMG/zip).
-- `./build.sh appstore` — сборка для Mac App Store с включённым App Sandbox.
-  Playbook публикации: `documents/tasks/2026/06/open-source-and-appstore.md`.
+- `./build.sh dist` — **неподписанный** бандл для Mac App Store. App Sandbox
+  объявлен в `Resources/SmartLinksOpener.appstore.entitlements` и применяется
+  при подписи, которая выполняется вне этого репозитория.
 
 ## Возможности
 
@@ -140,17 +140,12 @@ xcrun notarytool submit SmartLinksOpener.app --keychain-profile "AC" --wait
 xcrun stapler staple SmartLinksOpener.app
 ```
 
-**Mac App Store (платная сборка, App Sandbox):** полный playbook — в
-`documents/tasks/2026/06/open-source-and-appstore.md`. Кратко:
+**Mac App Store (платная сборка, App Sandbox):** этот репозиторий собирает
+только неподписанный бандл. Подпись, упаковка `.pkg` и загрузка в App Store
+Connect выполняются вне репозитория.
 
 ```bash
-MAS_APP_IDENTITY="Apple Distribution: ВАШЕ ИМЯ (TEAMID)" \
-MAS_PROVISION_PROFILE=./SmartLinksOpener_MAS.provisionprofile \
-  ./build.sh appstore
-productbuild --component SmartLinksOpener-AppStore.app /Applications \
-    --sign "3rd Party Mac Developer Installer: ВАШЕ ИМЯ (TEAMID)" SmartLinksOpener.pkg
-xcrun altool --upload-app -f SmartLinksOpener.pkg -t macos \
-    --apiKey <KEY_ID> --apiIssuer <ISSUER_ID>   # или Transporter.app
+./build.sh dist   # → .build/dist/SmartLinksOpener.app (без подписи)
 ```
 
 Автозапуск (`SMAppService`) надёжно работает только для подписанного приложения,

@@ -85,9 +85,9 @@
 - **Status:** [x]
 
 ### 3.11 FR-DIST.MAS: Paid sandboxed Mac App Store build [ANC:fr:dist.mas]
-- **Desc:** A separate sandboxed build for the Mac App Store (App Sandbox mandatory), sold at a small price (~$3/€3). Source stays open (GPL); only the copyright holder publishes the paid binary. Build via `./build.sh appstore`.
-- **Scenario:** `./build.sh appstore` → `SmartLinksOpener-AppStore.app` signed with `com.apple.security.app-sandbox`; runs sandboxed (container created), enumerates browsers, shows picker.
-- **Acceptance:** `./build.sh appstore && codesign -d --entitlements - SmartLinksOpener-AppStore.app 2>&1 | grep -q app-sandbox`. App Store upload/pricing: `manual — maintainer — documents/tasks/2026/06/open-source-and-appstore.md`.
+- **Desc:** A separate sandboxed build for the Mac App Store (App Sandbox mandatory), sold at a small price (~$3/€3). Source stays open (GPL); only the copyright holder publishes the paid binary. This repo builds the **unsigned** bundle via `./build.sh dist` and nothing more — signing, `.pkg` packaging and App Store Connect upload happen outside it, so no credential or store API key lives here.
+- **Scenario:** `./build.sh dist` → unsigned `.build/dist/SmartLinksOpener.app` (icon as a compiled asset catalog); signed elsewhere with `Resources/SmartLinksOpener.appstore.entitlements`, then runs sandboxed (container created), enumerates browsers, shows picker.
+- **Acceptance:** `./build.sh dist && test -x .build/dist/SmartLinksOpener.app/Contents/MacOS/SmartLinksOpener && test -f .build/dist/SmartLinksOpener.app/Contents/Resources/Assets.car && /usr/libexec/PlistBuddy -c 'Print :com.apple.security.app-sandbox' Resources/SmartLinksOpener.appstore.entitlements | grep -q true`. Signing, upload and pricing: `manual — maintainer — performed outside this repository`.
 - **Status:** [x] (build) / [ ] (uploaded & priced — maintainer step)
 
 ### 3.13 FR-APP-ICON: Brand app icon & menu-bar branding [ANC:fr:app-icon]

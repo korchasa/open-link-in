@@ -1,6 +1,7 @@
 ---
 date: 2026-06-16
-status: in progress
+status: superseded
+superseded_by: "[drop-appstore-release-ci](../08/drop-appstore-release-ci.md)"
 implements:
   - FR-DIST.MAS
 tags: [ci-cd, app-store, signing, onboarding]
