@@ -1,16 +1,26 @@
 name: CI
 
+# Checks only. This workflow builds, lints and tests; it never signs, packages
+# or uploads anything — that happens outside this repository.
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+# A re-push to the same ref makes the previous run obsolete.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: macos-15
+    # Bound the job so a hang fails instead of idling.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
 
