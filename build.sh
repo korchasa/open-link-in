@@ -3,7 +3,7 @@
 #
 # Standard interface (flowai): check / test / dev / prod.
 #   ./build.sh prod      Build + bundle + sign (Developer ID) + register .app (default, open-source build)
-#   ./build.sh dist      Build the UNSIGNED Mac App Store bundle (signing done by app-store-factory)
+#   ./build.sh dist      Build the UNSIGNED Mac App Store bundle (signing done outside this repo)
 #   ./build.sh icon      Regenerate Resources/AppIcon.icns from Resources/AppIcon.iconset/
 #   ./build.sh check     build + comment-scan + format check + tests (verification gate)
 #   ./build.sh test      Run the test suite (optionally a filter: ./build.sh test <name>)
@@ -50,10 +50,10 @@ cmd_prod() {
 
 # --- dist: UNSIGNED sandboxed bundle for the App Store ------------------------
 # Signing (codesign with the distribution identity, embedding the provisioning
-# profile) and .pkg packaging are NOT done here — that is app-store-factory's
-# job. This target only assembles the unsigned bundle. The App Sandbox is
-# declared in Resources/SmartLinksOpener.appstore.entitlements, which the
-# factory applies at signing time.
+# profile) and .pkg packaging are NOT done here — they happen outside this
+# repository. This target only assembles the unsigned bundle. The App Sandbox is
+# declared in Resources/SmartLinksOpener.appstore.entitlements, which is applied
+# at signing time.
 cmd_dist() {
     local out=".build/dist/$APP"
 
@@ -82,7 +82,7 @@ cmd_dist() {
     rm -f "$out/Contents/Resources/AppIcon.icns"
 
     echo "==> Done (unsigned): $PWD/$out"
-    echo "    Signing + .pkg packaging are handled by app-store-factory."
+    echo "    Signing + .pkg packaging happen outside this repository."
 }
 
 # --- check: the comprehensive verification gate ------------------------------
