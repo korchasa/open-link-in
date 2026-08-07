@@ -24,10 +24,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Deno is the repository's command runner: every verb is `deno task <verb>`.
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Show toolchain
         run: |
           swift --version
           swift format --version
+          deno --version
 
       - name: Verify (build + comment-scan + format + tests)
-        run: ./build.sh check
+        run: deno task check

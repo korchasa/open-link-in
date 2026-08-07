@@ -1,0 +1,21 @@
+{
+  "name": "smart-links-opener",
+  "version": "1.0.0",
+  "exports": {},
+  "tasks": {
+    "check": "deno run -A scripts/check.ts",
+    "test": "deno run -A scripts/test.ts",
+    "dev": "deno run -A scripts/dev.ts",
+    "prod": "deno run -A scripts/prod.ts",
+    "dist": "deno run -A scripts/dist.ts",
+    "fmt": "deno run -A scripts/fmt.ts",
+    "icon": "deno run -A scripts/icon.ts"
+  },
+  "fmt": {
+    "include": ["scripts/", "deno.json"],
+    "lineWidth": 100
+  },
+  "lint": {
+    "include": ["scripts/"]
+  }
+}

@@ -5,7 +5,7 @@
 
 > В этом репозитории есть только проверки (`ci.yml`): сборка, форматирование и
 > тесты. Подпись, упаковка и загрузка в App Store Connect выполняются за его
-> пределами; здесь получается неподписанный бандл (`./build.sh dist`).
+> пределами; здесь получается неподписанный бандл (`deno task dist`).
 
 Минималистичное macOS-приложение, которое работает как браузер по умолчанию и
 открывает каждую ссылку в нужном браузере в зависимости от домена. Если правило
@@ -20,7 +20,7 @@
 Проект **с открытым исходным кодом под GPL-3.0-or-later** — код можно изучать,
 менять и распространять (с сохранением открытости форков).
 
-- **Собрать бесплатно из исходников:** `./build.sh` (см. ниже). Полностью
+- **Собрать бесплатно из исходников:** `deno task prod` (см. ниже). Полностью
   функциональная версия.
 - **Купить в Mac App Store (~$3 / €3):** официальная подписанная и нотаризованная
   сборка с автообновлением и в песочнице. Это удобство и способ поддержать
@@ -32,9 +32,9 @@
 по GPL это не ограничивает). Подробности — в `CONTRIBUTING.md`.
 
 Две конфигурации сборки:
-- `./build.sh prod` — открытая сборка, подпись Developer ID, Hardened Runtime, без
+- `deno task prod` — открытая сборка, подпись Developer ID, Hardened Runtime, без
   песочницы (распространение вне App Store: DMG/zip).
-- `./build.sh dist` — **неподписанный** бандл для Mac App Store. App Sandbox
+- `deno task dist` — **неподписанный** бандл для Mac App Store. App Sandbox
   объявлен в `Resources/SmartLinksOpener.appstore.entitlements` и применяется
   при подписи, которая выполняется вне этого репозитория.
 
@@ -80,8 +80,11 @@
 
 ## Сборка
 
+Нужны Xcode Command Line Tools (Swift 6.3) и [Deno 2](https://deno.com) —
+через него запускаются все команды репозитория (`brew install deno`).
+
 ```bash
-./build.sh
+deno task prod
 ```
 
 Скрипт компилирует релизную сборку, собирает `SmartLinksOpener.app`, подписывает
@@ -127,12 +130,12 @@ macOS автоматически подбирает язык по настрой
 
 ## Распространение
 
-Для локального запуска достаточно ad-hoc подписи (`./build.sh`).
+Для локального запуска достаточно ad-hoc подписи (`deno task prod`).
 
 **Вне App Store (Developer ID + нотаризация):**
 
 ```bash
-./build.sh prod
+deno task prod
 codesign --force --options runtime \
     --entitlements Resources/SmartLinksOpener.entitlements \
     --sign "Developer ID Application: ВАШЕ ИМЯ (TEAMID)" SmartLinksOpener.app
@@ -145,7 +148,7 @@ xcrun stapler staple SmartLinksOpener.app
 Connect выполняются вне репозитория.
 
 ```bash
-./build.sh dist   # → .build/dist/SmartLinksOpener.app (без подписи)
+deno task dist   # → .build/dist/SmartLinksOpener.app (без подписи)
 ```
 
 Автозапуск (`SMAppService`) надёжно работает только для подписанного приложения,

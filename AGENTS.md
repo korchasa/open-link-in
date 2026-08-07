@@ -24,7 +24,7 @@
 - **Native, dependency-free.** SwiftUI/AppKit + Swift Package Manager, zero third-party packages. Do not add dependencies without explicit approval.
 - **Background-agent invariants.** The app is an `LSUIElement` accessory: no Dock icon, controlled from the menu bar. It must NOT self-terminate after routing a link, and matched links must open without stealing focus.
 - **i18n discipline.** User-facing strings are English `LocalizedStringKey` / `String(localized:)` keys; translations live in `Resources/<lang>.lproj/Localizable.strings`. Data values (domains, browser names, bundle IDs) use `Text(verbatim:)` and are never localized. Adding a UI string means adding its key to every `*.lproj` catalog + `CFBundleLocalizations`.
-- **Two distributions.** (1) Open-source Developer ID build (`./build.sh prod`): Hardened Runtime, **no sandbox**, distributed outside the Mac App Store. (2) Paid Mac App Store build (`./build.sh dist`): assembles an **unsigned** bundle only; App Sandbox is declared in `Resources/SmartLinksOpener.appstore.entitlements` and applied at signing time. Signing, `.pkg` packaging and App Store Connect upload happen **outside this repository** — this repo has no release pipeline and must never gain one. Browser enumeration via LaunchServices and opening URLs in another app via `NSWorkspace` are permitted inside the sandbox (verified; precedent: Velja). Keep MAS entitlements minimal — only `com.apple.security.app-sandbox`.
+- **Two distributions.** (1) Open-source Developer ID build (`deno task prod`): Hardened Runtime, **no sandbox**, distributed outside the Mac App Store. (2) Paid Mac App Store build (`deno task dist`): assembles an **unsigned** bundle only; App Sandbox is declared in `Resources/SmartLinksOpener.appstore.entitlements` and applied at signing time. Signing, `.pkg` packaging and App Store Connect upload happen **outside this repository** — this repo has no release pipeline and must never gain one. Browser enumeration via LaunchServices and opening URLs in another app via `NSWorkspace` are permitted inside the sandbox (verified; precedent: Velja). Keep MAS entitlements minimal — only `com.apple.security.app-sandbox`.
 - **Licensing.** Source is **GPL-3.0-or-later**. The sole copyright holder ships the paid App Store build under the owner-exception; contributions require the `CONTRIBUTING.md` CLA so they can appear in that build. Do not change the license or relicense contributions without the maintainer's decision.
 
 ## Project Information
@@ -37,8 +37,8 @@ A minimalist macOS app that acts as the default web browser and routes every lin
 - **Language:** Swift 6.3 (toolchain), targeting macOS 13+ (`platforms: [.macOS(.v13)]`).
 - **UI:** SwiftUI (`App`, `MenuBarExtra`, views) + AppKit (`NSApplication`, `NSWindow`, `NSHostingController`, `NSWorkspace`).
 - **System frameworks:** LaunchServices (browser enumeration / default handler), `ServiceManagement` (`SMAppService` login item), Apple Events (`kAEGetURL`).
-- **Build:** Swift Package Manager (`Package.swift`, executable target) + `build.sh` that assembles, signs (Hardened Runtime, ad-hoc), and registers the `.app` bundle.
-- **Tooling:** `swift format` (Apple, 6.3) for formatting; `codesign`, `lsregister`, `notarytool`/`stapler` for distribution.
+- **Build:** Swift Package Manager (`Package.swift`, executable target) + Deno task scripts (`deno.json`, `scripts/*.ts`) that assemble, sign (Hardened Runtime, ad-hoc), and register the `.app` bundle.
+- **Tooling:** Deno 2 as the command runner (every verb is `deno task <verb>`; the scripts are dependency-free TypeScript); `swift format` (Apple, 6.3) for formatting; `codesign`, `lsregister`, `notarytool`/`stapler` for distribution.
 - **Dependencies:** none (no SPM/third-party packages).
 
 ## Architecture
@@ -51,7 +51,8 @@ Single executable packaged into a macOS `.app` bundle that the system recognizes
 - **Flow:** incoming link → Apple Event → `AppStore.handleIncoming` → matched: open silently; unmatched: raise picker. App stays resident throughout.
 
 ## Key Decisions
-- **SPM executable + manual bundling.** No Xcode project; `build.sh` hand-assembles the `.app` with `Info.plist` and `*.lproj`. Keeps the repo Xcode-free and scriptable.
+- **SPM executable + manual bundling.** No Xcode project; `scripts/bundle.ts` hand-assembles the `.app` with `Info.plist` and `*.lproj`. Keeps the repo Xcode-free and scriptable.
+- **Deno as the command runner.** The single entry point is `deno task <verb>`; the logic lives in typed, dependency-free scripts under `scripts/` instead of a shell script, so it type-checks and lints like the rest of the code.
 - **`UserDefaults` for rules.** Lightweight settings data → standard `UserDefaults` (`Codable`→JSON under one key), not a custom file. Window frame auto-persisted by AppKit.
 - **Modern default-browser API.** `NSWorkspace.setDefaultApplication(at:toOpenURLsWithScheme:)` (system consent dialog), replacing deprecated `LSSetDefaultHandlerForURLScheme`.
 - **`SMAppService` login item.** Modern replacement for `SMLoginItemSetEnabled`.
@@ -85,7 +86,7 @@ Cross-references between any two pieces of project knowledge — doc-to-doc, **a
 
 - **Drift discipline** — removing or renaming an anchor obliges updating every reference to it. Checked mechanically by `scripts/check-salp.ts` (dead-REF / duplicate-ANC / surviving-legacy-grammar) where the project ships such a script.
 
-- **Local verification gap** — this repo ships NO `scripts/check-salp.ts`, and `./build.sh check` does NOT validate SALP; anchor/ref integrity is enforced only by the external `doc-anchors-validate` Stop hook. So a green `check` does not mean references resolve. After any edit that adds/moves a `[REF:ns:id]` or `[ANC:ns:id]`, verify before finishing that every new `[REF:...]` resolves to exactly one heading-line `[ANC:...]`. Do NOT trust a bare `grep` for anchors — matches inside backtick code spans or prose are NOT valid declarations (the validator ignores them), so a grep "hit" can be a false positive. When you add a `// [REF:fr:X]` code marker, add the `### FR-… [ANC:fr:X]` SRS section in the SAME change.
+- **Local verification gap** — this repo ships NO `scripts/check-salp.ts`, and `deno task check` does NOT validate SALP; anchor/ref integrity is enforced only by the external `doc-anchors-validate` Stop hook. So a green `check` does not mean references resolve. After any edit that adds/moves a `[REF:ns:id]` or `[ANC:ns:id]`, verify before finishing that every new `[REF:...]` resolves to exactly one heading-line `[ANC:...]`. Do NOT trust a bare `grep` for anchors — matches inside backtick code spans or prose are NOT valid declarations (the validator ignores them), so a grep "hit" can be a false positive. When you add a `// [REF:fr:X]` code marker, add the `### FR-… [ANC:fr:X]` SRS section in the SAME change.
 
 ## Documentation Map
 
@@ -112,7 +113,7 @@ Maps source code paths to documentation sections that describe them. Used by com
 - `documents/assets/appstore/*.png` → SRS FR-DIST.MAS, FR-APP-ICON (App Store screenshots); documents/appstore-listing.md
 - `Resources/Info.plist` → SRS FR-DEFAULT-BROWSER, FR-BACKGROUND-AGENT, FR-APP-ICON
 - `Resources/*.lproj/Localizable.strings` → SRS FR-I18N
-- `build.sh` → Development Commands; SRS FR-DIST, FR-DIST.MAS, FR-APP-ICON (`icon` subcommand)
+- `deno.json`, `scripts/*.ts` → Development Commands; SRS FR-DIST, FR-DIST.MAS, FR-APP-ICON (`icon` task)
 - `Resources/SmartLinksOpener.entitlements` → SRS FR-DIST (Developer ID build)
 - `Resources/SmartLinksOpener.appstore.entitlements` → SRS FR-DIST.MAS (sandboxed App Store build)
 - `LICENSE` / `CONTRIBUTING.md` → SRS FR-DIST (GPL-3.0-or-later + CLA)
@@ -329,18 +330,20 @@ When the root cause is outside your control (missing API keys/URLs, missing gene
 - `prod` — runs the application in production mode.
 
 ### Detected Commands
-- `./build.sh check` — build (debug) + comment-scan + `swift format lint --strict` + tests (skips cleanly until a `Tests/` target exists). Final step (local only): rebuild the `.app` via `prod` and relaunch it (`pkill` → `open`, best-effort — a GUI-less session just warns). Skipped when `$CI` is set so CI stays a pure verification gate.
-- `./build.sh test [filter]` — run the test suite; the optional `filter` is **positional** (`./build.sh test BrowserRankingTests`, forwarded to `swift test --filter`), not a `--filter` flag. No-op until `Tests/` exists.
-- `./build.sh dev` — run the executable directly via `swift run` (Ctrl-C to stop).
-- `./build.sh prod` (default, also `./build.sh` / `./build.sh build`) — compile release, assemble `SmartLinksOpener.app`, sign (Hardened Runtime, ad-hoc), register with LaunchServices.
-- `./build.sh dist` — compile release and assemble the **unsigned** Mac App Store bundle at `.build/dist/SmartLinksOpener.app` (icon via `actool` → `Assets.car`). Signing, `.pkg` packaging and upload happen outside this repository; there is no release workflow here.
-- `./build.sh fmt` — auto-format `Sources/` in place via `swift format`.
-- `./build.sh icon` — regenerate `Resources/AppIcon.icns` from `Resources/AppIcon.iconset/` via `iconutil`.
+- `deno task check` — build (debug) + comment-scan + `swift format lint --strict` + tests (skips cleanly until a `Tests/` target exists). Final step (local only): rebuild the `.app` via `prod` and relaunch it (`pkill` → `open`, best-effort — a GUI-less session just warns). Skipped when `$CI` is set so CI stays a pure verification gate.
+- `deno task test [filter]` — run the test suite; the optional `filter` is **positional** (`deno task test BrowserRankingTests`, forwarded to `swift test --filter`), not a `--filter` flag. No-op until `Tests/` exists.
+- `deno task dev` — run the executable directly via `swift run` (Ctrl-C to stop).
+- `deno task prod` (default, also `deno task prod` / `deno task prod`) — compile release, assemble `SmartLinksOpener.app`, sign (Hardened Runtime, ad-hoc), register with LaunchServices.
+- `deno task dist` — compile release and assemble the **unsigned** Mac App Store bundle at `.build/dist/SmartLinksOpener.app` (icon via `actool` → `Assets.car`). Signing, `.pkg` packaging and upload happen outside this repository; there is no release workflow here.
+- `deno task fmt` — auto-format `Sources/` in place via `swift format`.
+- `deno task icon` — regenerate `Resources/AppIcon.icns` from `Resources/AppIcon.iconset/` via `iconutil`.
 
 > ⚠️ **Local verification — bundle-id collision.** `prod` and `dist` builds share `CFBundleIdentifier` `dev.korchasa.SmartLinksOpener`. With both present/running, `open -b dev.korchasa.SmartLinksOpener <url>` may route the Apple Event to a stale instance (e.g. an old picker still showing non-browsers). Before launch-testing: `pkill -9 -f SmartLinksOpener`, keep a single `.app` on disk, and `lsregister -u <path>` the other if it lingers in LaunchServices. Verify with `pgrep -fl SmartLinksOpener` (expect exactly one).
 
 ### Command Scripts
-- `build.sh` — single entry point implementing the standard interface as subcommands (`check`/`test`/`dev`/`prod`/`dist`/`fmt`). No separate `scripts/` directory; the project's command runner handles everything inline.
+- `deno.json` — the task table; it is the only place a verb is declared. Every task is `deno run -A scripts/<verb>.ts`.
+- `scripts/lib.ts` — process runner, file walker and the source scanner the gate uses instead of `grep -RInE` (the platform grep is not always GNU grep, and dialect differences change what the gate catches). `scripts/bundle.ts` — shared `.app` assembly for `prod` and `dist`.
+- The scripts import nothing from JSR or npm, so a bare checkout with no network runs every task; `check` type-checks and lints them before it does anything else.
 
 ### Git notes
 - Interactive git (`add -p`, `add -i`, `rebase -i`) is unavailable in this environment. To split ONE file's changes across two commits: temporarily edit the not-this-commit hunks back to their `HEAD` text, `git add <file>` (stages only this commit's delta), `git commit`, then edit the file to its final content and `git add` again for the next commit. Verify with `git diff --cached <file>` before every commit so content cannot leak into the wrong commit.

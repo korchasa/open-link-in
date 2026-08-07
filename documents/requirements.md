@@ -25,19 +25,19 @@
 ### 3.13 FR-FILE-OPEN: Route local HTML files [ANC:fr:file-open]
 - **Desc:** As the default web browser, macOS also hands the app local HTML files (`public.html`) via the document-open Apple Event (`kAEOpenDocuments`), distinct from the `kAEGetURL` web-link path. The app routes such file URLs through the same picker flow. A file has no domain, so no rule is created and the picker header shows the **filename** (not the full `file://` path) in one-time-open mode. The app must NOT fall back to opening its settings window.
 - **Scenario:** Double-click `~/page.html` while the app is the default browser → picker pops at the cursor titled `page.html` in "Open once — no rule created" mode → choose a browser → file opens in it; no rule stored; settings window does not appear.
-- **Acceptance:** automated — `./build.sh test LinkLabelTests` (`testFileURLShowsFilename` filename for `file://`, `testWebURLShowsRegistrableDomain` domain for web URL); `manual — maintainer — double-click a local .html → picker appears titled with the filename → choosing a browser opens the file in it; no rule stored; settings window does NOT appear`.
+- **Acceptance:** automated — `deno task test LinkLabelTests` (`testFileURLShowsFilename` filename for `file://`, `testWebURLShowsRegistrableDomain` domain for web URL); `manual — maintainer — double-click a local .html → picker appears titled with the filename → choosing a browser opens the file in it; no rule stored; settings window does NOT appear`.
 - **Status:** [ ]
 
 ### 3.10 FR-SUBDOMAIN: Subdomain routing & registrable-domain persistence [ANC:fr:subdomain]
 - **Desc:** Remembering a choice stores the **registrable (second-level) domain** — `mail.google.com` → `google.com` — and every subdomain of that domain routes to the chosen browser. Multi-label public suffixes (`co.uk`, `github.io`, …) reduce correctly (`news.bbc.co.uk` → `bbc.co.uk`); unknown suffixes fall back to the last two labels.
 - **Scenario:** Open `https://drive.google.com` with no rule → pick a browser + remember → rule `google.com` stored; later `mail.google.com` and `google.com` both open silently in that browser.
-- **Acceptance:** `Tests/SmartLinksOpenerTests/DomainTests.swift` (all cases over `Domain.registrable` + `Domain.host`); run `./build.sh test`.
+- **Acceptance:** `Tests/SmartLinksOpenerTests/DomainTests.swift` (all cases over `Domain.registrable` + `Domain.host`); run `deno task test`.
 - **Status:** [x]
 
 ### 3.3 FR-PICKER: Browser picker for unmatched links [ANC:fr:picker]
 - **Desc:** When no rule matches, a compact borderless glass panel pops at the cursor for every such link. It lists **only real browsers** (apps handling both `http` and `https`) as a **vertical list** ordered **most-used first**, with 1–9 quick-keys (and `0` for the tenth), ↑/↓ navigation (wrapping), Return to open, Esc or a corner ✕ to cancel. The default action is **open & remember**: choosing a browser creates a rule for the second-level domain and opens. Holding **⇧ Shift** switches to a one-time open — the panel turns orange, the header reads "Open once — no rule created", and no rule is stored. Concurrent unmatched links are FIFO-queued (depth shown as a "+N" badge), never dropped.
 - **Scenario:** Open `https://news.ycombinator.com` with no rule → glass panel appears at cursor → press `1` (or click) → opens the most-used browser and stores a rule for `ycombinator.com`; holding ⇧ while pressing `1` opens once without a rule; a second link opened meanwhile waits in queue and is shown next.
-- **Acceptance:** automated — `./build.sh test BrowserRankingTests` (frequency ordering), `./build.sh test PickerKeysTests` (hotkey labels 1–9/0, number-key→row mapping, wrapping ↑/↓ navigation); `manual — maintainer — borderless glass panel pops at cursor for an unmatched link; only real browsers listed as a vertical list; 1–9/0/↑/↓/Return/Esc/✕ work; choosing a browser adds a rule and opens; holding ⇧ turns the panel orange and opens once without a rule; a burst of links is queued, not dropped`.
+- **Acceptance:** automated — `deno task test BrowserRankingTests` (frequency ordering), `deno task test PickerKeysTests` (hotkey labels 1–9/0, number-key→row mapping, wrapping ↑/↓ navigation); `manual — maintainer — borderless glass panel pops at cursor for an unmatched link; only real browsers listed as a vertical list; 1–9/0/↑/↓/Return/Esc/✕ work; choosing a browser adds a rule and opens; holding ⇧ turns the panel orange and opens once without a rule; a burst of links is queued, not dropped`.
 - **Status:** [x]
 
 ### 3.4 FR-RULES-MGMT: Manage rules [ANC:fr:rules-mgmt]
@@ -51,7 +51,7 @@
 - **Desc:** Settings sidebar toggles per-browser picker visibility. The "hidden" set is stored (not "visible"), so newly installed browsers appear by default. Hiding the last visible browser is blocked (picker can never be empty). Picker and rule/add dropdowns offer only non-hidden browsers; a rule already pointing at a hidden/uninstalled browser keeps showing its target.
 - **Tasks:** [REF:task:2026-06-settings-window-browser-visibility | settings-window-browser-visibility]
 - **Scenario:** Toggle off a browser in the sidebar → it disappears from the picker and dropdowns → attempt to hide the last remaining visible browser → blocked.
-- **Acceptance:** automated — `./build.sh test BrowserVisibilityTests`; `manual — maintainer — toggling sidebar visibility updates picker/dropdowns; last visible browser cannot be hidden`.
+- **Acceptance:** automated — `deno task test BrowserVisibilityTests`; `manual — maintainer — toggling sidebar visibility updates picker/dropdowns; last visible browser cannot be hidden`.
 - **Status:** [x]
 
 ### 3.5 FR-BACKGROUND-AGENT: Background menu-bar agent [ANC:fr:background-agent]
@@ -79,22 +79,22 @@
 - **Status:** [x]
 
 ### 3.9 FR-DIST: Build, sign, distribute [ANC:fr:dist]
-- **Desc:** `build.sh` assembles the `.app` with Hardened Runtime ad-hoc signature and registers it; documents Developer ID + notarization path. Project is open source under GPL-3.0-or-later (`LICENSE`, `CONTRIBUTING.md`).
-- **Scenario:** Run `./build.sh prod` → signed `SmartLinksOpener.app` registered with LaunchServices.
-- **Acceptance:** `./build.sh prod && codesign -dvvv SmartLinksOpener.app 2>&1 | grep -q 'flags=.*runtime'`; `test -f LICENSE`.
+- **Desc:** `deno task prod` assembles the `.app` with Hardened Runtime ad-hoc signature and registers it; documents Developer ID + notarization path. Project is open source under GPL-3.0-or-later (`LICENSE`, `CONTRIBUTING.md`).
+- **Scenario:** Run `deno task prod` → signed `SmartLinksOpener.app` registered with LaunchServices.
+- **Acceptance:** `deno task prod && codesign -dvvv SmartLinksOpener.app 2>&1 | grep -q 'flags=.*runtime'`; `test -f LICENSE`.
 - **Status:** [x]
 
 ### 3.11 FR-DIST.MAS: Paid sandboxed Mac App Store build [ANC:fr:dist.mas]
-- **Desc:** A separate sandboxed build for the Mac App Store (App Sandbox mandatory), sold at a small price (~$3/€3). Source stays open (GPL); only the copyright holder publishes the paid binary. This repo builds the **unsigned** bundle via `./build.sh dist` and nothing more — signing, `.pkg` packaging and App Store Connect upload happen outside it, so no credential or store API key lives here.
-- **Scenario:** `./build.sh dist` → unsigned `.build/dist/SmartLinksOpener.app` (icon as a compiled asset catalog); signed elsewhere with `Resources/SmartLinksOpener.appstore.entitlements`, then runs sandboxed (container created), enumerates browsers, shows picker.
-- **Acceptance:** `./build.sh dist && test -x .build/dist/SmartLinksOpener.app/Contents/MacOS/SmartLinksOpener && test -f .build/dist/SmartLinksOpener.app/Contents/Resources/Assets.car && /usr/libexec/PlistBuddy -c 'Print :com.apple.security.app-sandbox' Resources/SmartLinksOpener.appstore.entitlements | grep -q true`. Signing, upload and pricing: `manual — maintainer — performed outside this repository`.
+- **Desc:** A separate sandboxed build for the Mac App Store (App Sandbox mandatory), sold at a small price (~$3/€3). Source stays open (GPL); only the copyright holder publishes the paid binary. This repo builds the **unsigned** bundle via `deno task dist` and nothing more — signing, `.pkg` packaging and App Store Connect upload happen outside it, so no credential or store API key lives here.
+- **Scenario:** `deno task dist` → unsigned `.build/dist/SmartLinksOpener.app` (icon as a compiled asset catalog); signed elsewhere with `Resources/SmartLinksOpener.appstore.entitlements`, then runs sandboxed (container created), enumerates browsers, shows picker.
+- **Acceptance:** `deno task dist && test -x .build/dist/SmartLinksOpener.app/Contents/MacOS/SmartLinksOpener && test -f .build/dist/SmartLinksOpener.app/Contents/Resources/Assets.car && /usr/libexec/PlistBuddy -c 'Print :com.apple.security.app-sandbox' Resources/SmartLinksOpener.appstore.entitlements | grep -q true`. Signing, upload and pricing: `manual — maintainer — performed outside this repository`.
 - **Status:** [x] (build) / [ ] (uploaded & priced — maintainer step)
 
 ### 3.13 FR-APP-ICON: Brand app icon & menu-bar branding [ANC:fr:app-icon]
-- **Desc:** Ships the final brand icon, reproducible from committed source (`Resources/AppIcon.iconset/` → `Resources/AppIcon.icns` via `./build.sh icon`), carrying the 1024px (512@2x) representation App Store validation requires; the vector source (`AppIcon.svg`) and 1024 master (`AppIcon-1024.png`) are committed for re-export and App Store Connect upload. The menu bar shows a monochrome template glyph (the `link` SF Symbol) per standard macOS convention — the system auto-tints it for light/dark menu bars.
+- **Desc:** Ships the final brand icon, reproducible from committed source (`Resources/AppIcon.iconset/` → `Resources/AppIcon.icns` via `deno task icon`), carrying the 1024px (512@2x) representation App Store validation requires; the vector source (`AppIcon.svg`) and 1024 master (`AppIcon-1024.png`) are committed for re-export and App Store Connect upload. The menu bar shows a monochrome template glyph (the `link` SF Symbol) per standard macOS convention — the system auto-tints it for light/dark menu bars.
 - **Tasks:** [REF:task:2026-06-finalize-app-icon-branding | finalize-app-icon-branding]
-- **Scenario:** `./build.sh icon` regenerates the `.icns` from the iconset → `./build.sh prod` bundles it → Finder/Dock/App Store show the brand icon; the menu-bar item shows a monochrome template glyph.
-- **Acceptance:** `./build.sh test MenuBarIconTests`; `./build.sh icon && iconutil -c iconset Resources/AppIcon.icns -o /tmp/i.iconset && sips -g pixelWidth /tmp/i.iconset/icon_512x512@2x.png | grep -q 1024`; `test -f Resources/AppIcon-1024.png`.
+- **Scenario:** `deno task icon` regenerates the `.icns` from the iconset → `deno task prod` bundles it → Finder/Dock/App Store show the brand icon; the menu-bar item shows a monochrome template glyph.
+- **Acceptance:** `deno task test MenuBarIconTests`; `deno task icon && iconutil -c iconset Resources/AppIcon.icns -o /tmp/i.iconset && sips -g pixelWidth /tmp/i.iconset/icon_512x512@2x.png | grep -q 1024`; `test -f Resources/AppIcon-1024.png`.
 - **Status:** [ ]
 
 ---
@@ -106,4 +106,4 @@
 - **API/Proto/UI:** System entry via two Apple Events — `kAEGetURL` (web-link default-browser invocation) and `kAEOpenDocuments` (local files handed to the app as default browser, e.g. `.html`); `NSWorkspace` to open URLs in a specific app and to query/set default handler; `SMAppService` for login item. UI: menu-bar `MenuBarExtra`, on-demand rules window, floating picker window.
 
 ## 6. Acceptance
-- **Criteria:** All FR acceptance references above pass on the current commit; `./build.sh check` is green; `./build.sh prod` produces a signed, browser-registered bundle.
+- **Criteria:** All FR acceptance references above pass on the current commit; `deno task check` is green; `deno task prod` produces a signed, browser-registered bundle.

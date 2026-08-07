@@ -40,6 +40,6 @@ of sending code.
 ## Development
 
 - Requirements: macOS 13+, Swift 6 toolchain (Xcode 16+).
-- Verify before opening a PR: `./build.sh check` (build + comment-scan + format + tests) must pass.
-- Format: `./build.sh fmt` (Apple `swift format`, config in `.swift-format`).
+- Verify before opening a PR: `deno task check` (build + comment-scan + format + tests) must pass.
+- Format: `deno task fmt` (Apple `swift format`, config in `.swift-format`).
 - See `AGENTS.md`, `documents/requirements.md` (SRS), and `documents/design.md` (SDS).
