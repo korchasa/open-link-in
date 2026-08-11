@@ -2,7 +2,7 @@
 
 ## 1. Intro
 - **Purpose:** Describe the implementation of Reroute — a macOS default-browser routing agent.
-- **Rel to SRS:** Realizes [REF:fr:default-browser], [REF:fr:route], [REF:fr:file-open], [REF:fr:picker], [REF:fr:rules-mgmt], [REF:fr:browser-visibility], [REF:fr:background-agent], [REF:fr:login-item], [REF:fr:i18n], [REF:fr:persist], [REF:fr:dist].
+- **Rel to SRS:** Realizes [REF:fr:default-browser], [REF:fr:route], [REF:fr:file-open], [REF:fr:picker], [REF:fr:rules-mgmt], [REF:fr:rules-search], [REF:fr:browser-visibility], [REF:fr:background-agent], [REF:fr:login-item], [REF:fr:i18n], [REF:fr:persist], [REF:fr:dist].
 
 ## 2. Arch
 - **Diagram:**
@@ -28,7 +28,7 @@ flowchart LR
 - **Deps:** AppKit, SwiftUI, AppStore.
 
 ### 3.2 Domain state — `AppStore.swift` [ANC:sds:store]
-- **Purpose:** `@MainActor ObservableObject` singleton. Real-browser enumeration (apps handling both `http` and `https`, via `NSWorkspace`), rule CRUD + persistence, longest-suffix matching, opening URLs in a browser, per-browser usage tracking (`usage.v1`) feeding frequency order, picker-visibility (hidden set under `hiddenBrowsers.v1`), a FIFO queue of pending links, default-browser handoff (`setDefaultApplication(at:toOpenURLsWithScheme:)`), login item (`SMAppService`). Realizes [REF:fr:route], [REF:fr:persist], [REF:fr:login-item], [REF:fr:default-browser], [REF:fr:picker], [REF:fr:browser-visibility].
+- **Purpose:** `@MainActor ObservableObject` singleton. Real-browser enumeration (apps handling both `http` and `https`, via `NSWorkspace`), rule CRUD + persistence, longest-suffix matching, opening URLs in a browser, per-browser usage tracking (`usage.v1`) feeding frequency order, picker-visibility (hidden set under `hiddenBrowsers.v1`), browser-icon memoisation (`icon(for:)`, keyed by bundle ID — `NSWorkspace.icon(forFile:)` returns a fresh `NSImage` per call, which costs a LaunchServices round-trip and defeats SwiftUI's row diffing), a FIFO queue of pending links, default-browser handoff (`setDefaultApplication(at:toOpenURLsWithScheme:)`), login item (`SMAppService`). Realizes [REF:fr:route], [REF:fr:persist], [REF:fr:login-item], [REF:fr:default-browser], [REF:fr:picker], [REF:fr:browser-visibility].
 - **Interfaces:** `handleIncoming(_:)`, `choose(_:for:remember:)`, `cancelPending()`, `matchingBrowser(for:)`, `addRule/deleteRule/updateRuleBrowser`, `refreshBrowsers()`, `setAsDefaultBrowser()`, `isDefaultBrowser()`, `launchAtLogin`; picker-visibility `pickerBrowsers`, `canHideBrowser(_:)`, `setBrowserHidden(_:_:)`, published `hiddenBrowserIDs`; published `pendingURL`/`pendingCount`/`usageCounts`. Private: `advanceQueue()`, `recordUse(_:)`, `handlerBundleIDs(forScheme:)`, `loadHidden()`.
 - **Deps:** AppKit, ServiceManagement, Foundation, Models, BrowserRanking.
 
@@ -38,8 +38,9 @@ flowchart LR
 - **Deps:** SwiftUI, AppKit, AppStore.
 
 ### 3.4 Rules view — `RulesView.swift` [ANC:sds:rules]
-- **Purpose:** SwiftUI management window, two-pane (Claude Design "Variant 2"). Left sidebar (236pt): brand header, browser availability toggles (hiding the last visible one blocked), launch-at-login. Right pane (full height): "Routing rules" title, default-browser banner (amber warning + "Make default" when not default; green confirmation when default), column header (Domain / Open in), scrollable rule list (browser-icon + domain + browser dropdown + delete), and a pinned add-rule row (domain field + dropdown + Add). Rule/add dropdowns offer only enabled (non-hidden) browsers; a rule already pointing at a hidden/uninstalled browser keeps showing its target. No refresh button. Realizes [REF:fr:rules-mgmt], [REF:fr:browser-visibility], [REF:fr:default-browser], [REF:fr:login-item].
+- **Purpose:** SwiftUI management window, two-pane (Claude Design "Variant 2"). Left sidebar (236pt): brand header, browser availability toggles (hiding the last visible one blocked), launch-at-login. Right pane (full height): "Routing rules" title, default-browser banner (amber warning + "Make default" when not default; green confirmation when default), a search field beside the title that filters the list by domain (shown only once a rule exists), column header (Domain / Open in), scrollable rule list (browser-icon + domain + browser dropdown + delete), and a pinned add-rule row (domain field + dropdown + Add). A search that matches nothing replaces the list with a "no rules match" line, distinct from the first-run empty state; adding a rule clears the query. Rule/add dropdowns offer only enabled (non-hidden) browsers; a rule already pointing at a hidden/uninstalled browser keeps showing its target. No refresh button. Realizes [REF:fr:rules-mgmt], [REF:fr:rules-search], [REF:fr:browser-visibility], [REF:fr:default-browser], [REF:fr:login-item].
 - **Interfaces:** `RulesView()`; binds to `store` (`browsers`, `pickerBrowsers`, `hiddenBrowserIDs`, `rules`, `isDefaultBrowser()`, `setAsDefaultBrowser()`, `launchAtLogin`, `icon(for:)`). Window default 720×560, min 560×420 (App.swift).
+- **Render cost:** the browser dropdown is the expensive part of a row — about 12 ms to build against 0.25 ms for the rest — so the pane is built so that typing never rebuilds rows it does not have to. The list is a `LazyVStack` (rows below the fold are not built at all), each row is its own `RuleRow` view storing only its `Rule` (so SwiftUI skips unchanged rows when the parent body re-evaluates), and the dropdown is a `BrowserPicker` view. Measured on 200 rules: restoring the full list after clearing the search went from 4048 ms to 407 ms, and total render stopped growing with the rule count.
 - **Deps:** SwiftUI, AppStore.
 
 ### 3.6 Domain resolver — `Domain.swift` [ANC:sds:domain]
@@ -60,6 +61,11 @@ flowchart LR
 ### 3.8 Browser visibility — `BrowserVisibility.swift` [ANC:sds:visibility]
 - **Purpose:** Pure, side-effect-free picker-visibility logic — which browsers the picker may show and whether a given browser may still be hidden. The "hidden" set is stored (not "visible") so newly installed browsers appear by default. Unit-tested in isolation. Realizes [REF:fr:browser-visibility].
 - **Interfaces:** `BrowserVisibility.visible(_ browsers: [Browser], hidden: Set<String>) -> [Browser]` (order-preserving filter); `BrowserVisibility.canHide(_ id:, hidden:, all:) -> Bool` (false unless ≥1 browser would remain visible — guards an empty picker).
+- **Deps:** Foundation, Models.
+
+### 3.8a Rule filter — `RuleFilter.swift` [ANC:sds:rule-filter]
+- **Purpose:** Pure, side-effect-free search logic behind the rules window's search field — which rules match what was typed. Case- and diacritic-insensitive substring match on the domain, order preserved, blank query matches everything. Extracted from `RulesView` so the behaviour is unit-tested without a view. Realizes [REF:fr:rules-search].
+- **Interfaces:** `RuleFilter.matching(_ rules: [Rule], query: String) -> [Rule]`.
 - **Deps:** Foundation, Models.
 
 ### 3.9 Picker keys — `PickerKeys.swift` [ANC:sds:picker-keys]

@@ -34,3 +34,8 @@
 "Reroute isn't your default browser" = "Reroute n'est pas votre navigateur par défaut";
 "Routing rules only work when macOS hands links to Reroute. Until then, every link keeps opening in your usual browser." = "Les règles ne fonctionnent que lorsque macOS transmet les liens à Reroute. D'ici là, tous les liens continueront de s'ouvrir dans votre navigateur habituel.";
 "macOS will ask you to confirm the change." = "macOS vous demandera de confirmer le changement.";
+
+/* Rules search [REF:fr:rules-search] */
+"Search domains" = "Rechercher un domaine";
+"Clear search" = "Effacer la recherche";
+"No rules match “%@”." = "Aucune règle ne correspond à « %@ ».";

@@ -46,6 +46,10 @@ final class AppStore: ObservableObject {
     var onShowPicker: (() -> Void)?
     var onClosePicker: (() -> Void)?
 
+    /// Browser icons keyed by bundle ID — see `icon(for:)`. Not `@Published`:
+    /// filling it is memoisation, not a state change.
+    private var iconCache: [String: NSImage] = [:]
+
     private let defaultsKey = "rules.v1"
     private let usageKey = "usage.v1"
     private let hiddenKey = "hiddenBrowsers.v1"
@@ -119,8 +123,17 @@ final class AppStore: ObservableObject {
         browsers.first { $0.bundleID == id }
     }
 
+    /// App icon for a browser, memoised per bundle ID.
+    ///
+    /// `NSWorkspace.icon(forFile:)` hands back a fresh `NSImage` on every call,
+    /// so an uncached lookup both costs a LaunchServices round-trip (~0.1–0.7 ms)
+    /// and denies SwiftUI the identity it needs to skip redrawing an unchanged
+    /// row. Icons are stable for the life of the process.
     func icon(for browser: Browser) -> NSImage {
-        NSWorkspace.shared.icon(forFile: browser.appURL.path)
+        if let cached = iconCache[browser.bundleID] { return cached }
+        let image = NSWorkspace.shared.icon(forFile: browser.appURL.path)
+        iconCache[browser.bundleID] = image
+        return image
     }
 
     // MARK: - Rules persistence

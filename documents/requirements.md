@@ -47,6 +47,13 @@
 - **Acceptance:** `manual — maintainer — add/change/delete reflected in UI and persisted across relaunch`.
 - **Status:** [x]
 
+### 3.14 FR-RULES-SEARCH: Search rules by domain [ANC:fr:rules-search]
+- **Desc:** The rules pane header carries a search field that filters the rule list by domain: case-insensitive, accent-insensitive substring match, surrounding spaces ignored, list order preserved. A blank query shows every rule. The field appears only when at least one rule exists. When a search hides every rule the pane says so ("No rules match “%@”.") instead of showing the first-run "no rules yet" text, so a filtered list is never mistaken for lost data. Adding a rule clears the query, so the new rule is always visible after Add.
+- **Tasks:** [REF:task:2026-08-search-rules-by-domain | search-rules-by-domain]
+- **Scenario:** Rules window with `github.com`, `figma.com`, `notion.so` → type `git` → only `github.com` remains → clear the field (✕) → all three return.
+- **Acceptance:** automated — `deno task test RuleFilterTests`; `manual — maintainer — typing filters the list live; ✕ clears it; a non-matching query shows the "no rules match" text; adding a rule clears the search and shows it`.
+- **Status:** [x]
+
 ### 3.12 FR-BROWSER-VISIBILITY: Hide browsers from picker [ANC:fr:browser-visibility]
 - **Desc:** Settings sidebar toggles per-browser picker visibility. The "hidden" set is stored (not "visible"), so newly installed browsers appear by default. Hiding the last visible browser is blocked (picker can never be empty). Picker and rule/add dropdowns offer only non-hidden browsers; a rule already pointing at a hidden/uninstalled browser keeps showing its target.
 - **Tasks:** [REF:task:2026-06-settings-window-browser-visibility | settings-window-browser-visibility]
@@ -100,7 +107,7 @@
 ---
 
 ## 4. Non-Functional
-- **Perf/Reliability/Sec/Scale/UX:** Routing latency negligible (event-driven, no polling); only public Apple APIs (notarization-safe); no data collection; resident agent idle when not routing; native macOS minimalist UI; matched links never steal focus.
+- **Perf/Reliability/Sec/Scale/UX:** Routing latency negligible (event-driven, no polling); rules-window redraw independent of the rule count (lazy list, per-row views, memoised icons); only public Apple APIs (notarization-safe); no data collection; resident agent idle when not routing; native macOS minimalist UI; matched links never steal focus.
 
 ## 5. Interfaces
 - **API/Proto/UI:** System entry via two Apple Events — `kAEGetURL` (web-link default-browser invocation) and `kAEOpenDocuments` (local files handed to the app as default browser, e.g. `.html`); `NSWorkspace` to open URLs in a specific app and to query/set default handler; `SMAppService` for login item. UI: menu-bar `MenuBarExtra`, on-demand rules window, floating picker window.

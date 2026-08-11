@@ -9,6 +9,9 @@ struct RulesView: View {
     @EnvironmentObject var store: AppStore
     @State private var newDomain = ""
     @State private var newBundleID = ""
+    /// What the user typed into the rules search field. [REF:fr:rules-search]
+    @State private var query = ""
+    @FocusState private var searchFocused: Bool
 
     /// Blur applied to the window content while Reroute is not the default
     /// browser — enough to signal "locked" without hiding the data. Constant per
@@ -223,11 +226,7 @@ struct RulesView: View {
 
     private var rulesPane: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Routing rules")
-                .font(.system(size: 15, weight: .bold))
-                .padding(.horizontal, 20)
-                .padding(.top, 15)
-                .padding(.bottom, 11)
+            paneHeader
             columnHeader
             rulesList
             Divider()
@@ -235,6 +234,65 @@ struct RulesView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Color(nsColor: .textBackgroundColor))
+    }
+
+    /// Pane title with the search field beside it. The field only appears once
+    /// there is something to search — an empty list needs no filter, and the
+    /// first-run window stays as bare as it was.
+    private var paneHeader: some View {
+        HStack(spacing: 12) {
+            Text("Routing rules")
+                .font(.system(size: 15, weight: .bold))
+            Spacer(minLength: 8)
+            if !store.rules.isEmpty {
+                searchField
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 15)
+        .padding(.bottom, 11)
+    }
+
+    /// Compact search field: glyph, text, and a clear button that only shows
+    /// while there is something to clear. [REF:fr:rules-search]
+    private var searchField: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.secondary)
+            TextField("", text: $query, prompt: Text("Search domains"))
+                .textFieldStyle(.plain)
+                .font(.system(size: 12.5))
+                .focused($searchFocused)
+                .frame(width: 150)
+            if !query.isEmpty {
+                Button {
+                    query = ""
+                    searchFocused = true
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.tertiary)
+                }
+                .buttonStyle(.borderless)
+                .help("Clear search")
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color(nsColor: .windowBackgroundColor))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+                )
+        )
+    }
+
+    /// The rules the list shows: everything, or what the search matches.
+    private var visibleRules: [Rule] {
+        RuleFilter.matching(store.rules, query: query)
     }
 
     private var columnHeader: some View {
@@ -264,11 +322,23 @@ struct RulesView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(20)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        } else if visibleRules.isEmpty {
+            // Rules exist, the search just hides them — say so, so an empty pane
+            // is never read as "my rules are gone". [REF:fr:rules-search]
+            Text("No rules match “\(query)”.")
+                .font(.system(size: 12.5))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         } else {
             ScrollView {
-                VStack(spacing: 0) {
-                    ForEach(store.rules) { rule in
-                        ruleRow(rule)
+                // Lazy: a rule row costs about 12 ms to build, almost all of it
+                // the browser dropdown, so building the rows below the fold is
+                // what made typing in the search field stutter.
+                LazyVStack(spacing: 0) {
+                    ForEach(visibleRules) { rule in
+                        RuleRow(rule: rule)
                         Divider()
                     }
                 }
@@ -277,7 +347,48 @@ struct RulesView: View {
         }
     }
 
-    private func ruleRow(_ rule: Rule) -> some View {
+    // MARK: - Add row (pinned at the bottom of the rules pane)
+
+    private var addRow: some View {
+        HStack(spacing: 10) {
+            TextField("", text: $newDomain, prompt: Text(verbatim: "github.com"))
+                .textFieldStyle(.roundedBorder)
+                .frame(maxWidth: .infinity)
+                .onSubmit(addRule)
+            BrowserPicker(selection: $newBundleID)
+                .frame(width: 150)
+            Button("Add", action: addRule)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
+                .disabled(newDomain.trimmingCharacters(in: .whitespaces).isEmpty || newBundleID.isEmpty)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 11)
+        .background(Color(nsColor: .windowBackgroundColor).opacity(0.6))
+    }
+
+    private func addRule() {
+        let domain = newDomain.trimmingCharacters(in: .whitespaces)
+        guard !domain.isEmpty, !newBundleID.isEmpty else { return }
+        store.addRule(domain: domain, bundleID: newBundleID)
+        newDomain = ""
+        // Drop any active search — otherwise the rule just added can land
+        // outside the filter and look like it was not saved.
+        query = ""
+    }
+}
+
+/// One rule: icon, domain, browser dropdown, delete.
+///
+/// A view of its own rather than a method on `RulesView`, because the only thing
+/// it stores is the rule. Typing in the search field re-evaluates `RulesView`'s
+/// body, and SwiftUI can skip re-building the rows whose rule did not change —
+/// which it cannot do for a view built inline in the parent's body.
+private struct RuleRow: View {
+    @EnvironmentObject var store: AppStore
+    let rule: Rule
+
+    var body: some View {
         HStack(spacing: 12) {
             HStack(spacing: 9) {
                 if let b = store.browser(forBundleID: rule.bundleID) {
@@ -296,12 +407,11 @@ struct RulesView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            browserPicker(
+            BrowserPicker(
                 selection: Binding(
                     get: { rule.bundleID },
                     set: { store.updateRuleBrowser(rule, bundleID: $0) }
-                ),
-                currentID: rule.bundleID
+                )
             )
             .frame(width: 170)
 
@@ -317,51 +427,28 @@ struct RulesView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 7)
     }
+}
 
-    // MARK: - Add row (pinned at the bottom of the rules pane)
+/// A browser dropdown listing only enabled (non-hidden) browsers, matching the
+/// sidebar toggles. A rule pointing at a now-hidden or uninstalled browser keeps
+/// showing its current target so the choice is never silently lost.
+/// [REF:fr:browser-visibility]
+private struct BrowserPicker: View {
+    @EnvironmentObject var store: AppStore
+    @Binding var selection: String
 
-    private var addRow: some View {
-        HStack(spacing: 10) {
-            TextField("", text: $newDomain, prompt: Text(verbatim: "github.com"))
-                .textFieldStyle(.roundedBorder)
-                .frame(maxWidth: .infinity)
-                .onSubmit(addRule)
-            browserPicker(selection: $newBundleID, currentID: newBundleID)
-                .frame(width: 150)
-            Button("Add", action: addRule)
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .disabled(newDomain.trimmingCharacters(in: .whitespaces).isEmpty || newBundleID.isEmpty)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 11)
-        .background(Color(nsColor: .windowBackgroundColor).opacity(0.6))
-    }
-
-    // A browser dropdown listing only enabled (non-hidden) browsers, matching the
-    // sidebar toggles. A rule pointing at a now-hidden or uninstalled browser keeps
-    // showing its current target so the choice is never silently lost.
-    // [REF:fr:browser-visibility]
-    @ViewBuilder
-    private func browserPicker(selection: Binding<String>, currentID: String) -> some View {
+    var body: some View {
         let enabled = store.pickerBrowsers
-        Picker("", selection: selection) {
+        Picker("", selection: $selection) {
             ForEach(enabled) { Text(verbatim: $0.name).tag($0.bundleID) }
-            if !enabled.contains(where: { $0.bundleID == currentID }) {
-                if let b = store.browser(forBundleID: currentID) {
-                    Text(verbatim: b.name).tag(currentID)
-                } else if !currentID.isEmpty {
-                    Text(verbatim: "⚠️ \(currentID)").tag(currentID)
+            if !enabled.contains(where: { $0.bundleID == selection }) {
+                if let b = store.browser(forBundleID: selection) {
+                    Text(verbatim: b.name).tag(selection)
+                } else if !selection.isEmpty {
+                    Text(verbatim: "⚠️ \(selection)").tag(selection)
                 }
             }
         }
         .labelsHidden()
-    }
-
-    private func addRule() {
-        let domain = newDomain.trimmingCharacters(in: .whitespaces)
-        guard !domain.isEmpty, !newBundleID.isEmpty else { return }
-        store.addRule(domain: domain, bundleID: newBundleID)
-        newDomain = ""
     }
 }
