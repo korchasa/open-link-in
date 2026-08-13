@@ -80,6 +80,30 @@ Measured on the same offscreen probe, 200 rules, updating an open window:
 Full-window render also stopped growing with the rule count — 593/1819/2633/5224
 ms at 10/50/100/200 rules before, 521/551/555/562 ms after.
 
+### Follow-up 2: the lazy list moved the cost into scrolling
+
+A lazy list builds a row when it scrolls into view, so a 12 ms row turned an
+open-the-window stall into a scrolling stutter. Both symptoms are the same
+defect: the row is too expensive, and the dropdown is why. Measured per 20 rows
+(one viewport): `Picker` 251.6 ms, `Menu` 85.1 ms, `Menu` with lazily built
+items 85.1 ms (so the cost is the control, not its items), a plain label with a
+chevron 7.2 ms.
+
+At most one dropdown is ever open, so the rows no longer hold one.
+`BrowserMenuButton` draws popup-button chrome — rounded fill, separator border,
+`chevron.up.chevron.down` — and opens a real `NSMenu` over itself on click, via
+a one-`NSView` `MenuAnchor` for positioning and a `MenuHandler` for the ObjC
+target/action pair `NSMenuItem` requires. The add row keeps a real
+`BrowserPicker`: there is only one of it.
+
+Measured on the real `RuleRow`, 20 rows: **207.0 ms → 56.6 ms** (10.4 → 2.8 ms
+per row). Note this is 3.7×, not the 35× the isolated control measurement
+suggested — the rest of the row (icon, domain, delete button, store
+subscription) is unchanged and now dominates. A very fast scroll revealing ~10
+rows in one frame can still cost ~28 ms; if that shows, the next candidates are
+the per-row `MenuHandler` and `MenuAnchor` allocations, removable by opening the
+menu at the click point instead of over the control.
+
 ## Verification
 
 - `deno task test RuleFilterTests` — 5 cases (blank query, substring anywhere,

@@ -407,12 +407,9 @@ private struct RuleRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            BrowserPicker(
-                selection: Binding(
-                    get: { rule.bundleID },
-                    set: { store.updateRuleBrowser(rule, bundleID: $0) }
-                )
-            )
+            BrowserMenuButton(currentID: rule.bundleID) {
+                store.updateRuleBrowser(rule, bundleID: $0)
+            }
             .frame(width: 170)
 
             Button(role: .destructive) {
@@ -429,9 +426,107 @@ private struct RuleRow: View {
     }
 }
 
-/// A browser dropdown listing only enabled (non-hidden) browsers, matching the
-/// sidebar toggles. A rule pointing at a now-hidden or uninstalled browser keeps
-/// showing its current target so the choice is never silently lost.
+/// The rule rows' browser control: drawn as a popup button, but only *drawn*.
+///
+/// A real `Picker` costs about 12.6 ms to build against 0.36 ms for this — with
+/// one per rule that is the difference between a list that scrolls and one that
+/// stutters, even though at most one dropdown is ever open. The click opens a
+/// real `NSMenu` at the same place, so the interaction is unchanged.
+///
+/// Browsers offered match the sidebar toggles; a rule pointing at a now-hidden
+/// or uninstalled browser keeps showing its target. [REF:fr:browser-visibility]
+private struct BrowserMenuButton: View {
+    @EnvironmentObject var store: AppStore
+    let currentID: String
+    let onSelect: (String) -> Void
+
+    @State private var anchor = MenuAnchor.Holder()
+    @State private var handler = MenuHandler()
+
+    private var title: String {
+        store.browser(forBundleID: currentID)?.name ?? (currentID.isEmpty ? "" : "⚠️ \(currentID)")
+    }
+
+    var body: some View {
+        Button(action: present) {
+            HStack(spacing: 5) {
+                Text(verbatim: title)
+                    .font(.system(size: 12.5))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Spacer(minLength: 2)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(Color(nsColor: .controlColor))
+                    .shadow(color: .black.opacity(0.10), radius: 0.5, y: 0.5)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .background(MenuAnchor(holder: anchor))
+        .accessibilityLabel(Text("Open in"))
+        .accessibilityValue(Text(verbatim: title))
+    }
+
+    private func present() {
+        guard let view = anchor.view else { return }
+        let menu = NSMenu()
+        var listed = store.pickerBrowsers.map { ($0.name, $0.bundleID) }
+        if !listed.contains(where: { $0.1 == currentID }), !currentID.isEmpty {
+            listed.append((title, currentID))
+        }
+        handler.onSelect = onSelect
+        for (name, id) in listed {
+            let item = NSMenuItem(
+                title: name, action: #selector(MenuHandler.pick(_:)), keyEquivalent: "")
+            item.target = handler
+            item.representedObject = id
+            item.state = id == currentID ? .on : .off
+            menu.addItem(item)
+        }
+        menu.popUp(
+            positioning: menu.items.first { $0.state == .on },
+            at: NSPoint(x: 0, y: view.bounds.height), in: view)
+    }
+}
+
+/// Captures the backing `NSView` so the menu can be positioned over the button.
+private struct MenuAnchor: NSViewRepresentable {
+    final class Holder { var view: NSView? }
+    let holder: Holder
+
+    func makeNSView(context: Context) -> NSView {
+        let v = NSView()
+        holder.view = v
+        return v
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) { holder.view = nsView }
+}
+
+/// Menu-item target. `NSMenuItem` needs an ObjC target/action pair, so the
+/// SwiftUI closure is parked here for the lifetime of the button.
+private final class MenuHandler: NSObject {
+    var onSelect: ((String) -> Void)?
+
+    @objc func pick(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String else { return }
+        onSelect?(id)
+    }
+}
+
+/// A real browser dropdown, used by the add row — there is only one of it, so
+/// the cost that rules out a `Picker` per rule row does not apply.
 /// [REF:fr:browser-visibility]
 private struct BrowserPicker: View {
     @EnvironmentObject var store: AppStore
