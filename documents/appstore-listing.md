@@ -38,8 +38,9 @@ FEATURES
 • Matched links open instantly, without stealing focus.
 • Native, lightweight, no tracking, no accounts, works offline.
 
-Open source: the code is available under GPLv3 at github.com/korchasa/open-link-in.
-This App Store build is the convenient, signed, auto-updating version.
+The source is public and readable at github.com/korchasa/open-link-in, under the
+PolyForm Noncommercial 1.0.0 licence. This App Store build is the convenient,
+signed, auto-updating version.
 ```
 - **What's New (release notes):** First release.
 
@@ -67,8 +68,9 @@ Reroute открывает каждую ссылку в том браузере,
 • Совпавшие ссылки открываются мгновенно, не перехватывая фокус.
 • Нативное, лёгкое, без слежки, без аккаунтов, работает офлайн.
 
-Открытый код под GPLv3: github.com/korchasa/open-link-in. Сборка в App Store —
-удобная подписанная версия с автообновлением.
+Исходный код открыт для чтения: github.com/korchasa/open-link-in, лицензия
+PolyForm Noncommercial 1.0.0. Сборка в App Store — удобная подписанная версия
+с автообновлением.
 ```
 - **What's New (release notes):** Первый релиз.
 

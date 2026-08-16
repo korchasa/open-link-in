@@ -86,13 +86,13 @@
 - **Status:** [x]
 
 ### 3.9 FR-DIST: Build, sign, distribute [ANC:fr:dist]
-- **Desc:** `deno task prod` assembles the `.app` with Hardened Runtime ad-hoc signature and registers it; documents Developer ID + notarization path. Project is open source under GPL-3.0-or-later (`LICENSE`, `CONTRIBUTING.md`).
+- **Desc:** `deno task prod` assembles the `.app` with Hardened Runtime ad-hoc signature and registers it; documents Developer ID + notarization path. Source is public under PolyForm-Noncommercial-1.0.0 (`LICENSE`, `CONTRIBUTING.md`).
 - **Scenario:** Run `deno task prod` → signed `SmartLinksOpener.app` registered with LaunchServices.
 - **Acceptance:** `deno task prod && codesign -dvvv SmartLinksOpener.app 2>&1 | grep -q 'flags=.*runtime'`; `test -f LICENSE`.
 - **Status:** [x]
 
 ### 3.11 FR-DIST.MAS: Paid sandboxed Mac App Store build [ANC:fr:dist.mas]
-- **Desc:** A separate sandboxed build for the Mac App Store (App Sandbox mandatory), sold at a small price (~$3/€3). Source stays open (GPL); only the copyright holder publishes the paid binary. This repo builds the **unsigned** bundle via `deno task dist` and nothing more — signing, `.pkg` packaging and App Store Connect upload happen outside it, so no credential or store API key lives here.
+- **Desc:** A separate sandboxed build for the Mac App Store (App Sandbox mandatory), sold at a small price (~$3/€3). Source stays public under PolyForm-Noncommercial-1.0.0, which grants no commercial use, so only the copyright holder may publish a paid binary. This repo builds the **unsigned** bundle via `deno task dist` and nothing more — signing, `.pkg` packaging and App Store Connect upload happen outside it, so no credential or store API key lives here.
 - **Scenario:** `deno task dist` → unsigned `.build/dist/SmartLinksOpener.app` (icon as a compiled asset catalog); signed elsewhere with `Resources/SmartLinksOpener.appstore.entitlements`, then runs sandboxed (container created), enumerates browsers, shows picker.
 - **Acceptance:** `deno task dist && test -x .build/dist/SmartLinksOpener.app/Contents/MacOS/SmartLinksOpener && test -f .build/dist/SmartLinksOpener.app/Contents/Resources/Assets.car && /usr/libexec/PlistBuddy -c 'Print :com.apple.security.app-sandbox' Resources/SmartLinksOpener.appstore.entitlements | grep -q true`. Signing, upload and pricing: `manual — maintainer — performed outside this repository`.
 - **Status:** [x] (build) / [ ] (uploaded & priced — maintainer step)

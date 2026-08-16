@@ -25,7 +25,7 @@
 - **Background-agent invariants.** The app is an `LSUIElement` accessory: no Dock icon, controlled from the menu bar. It must NOT self-terminate after routing a link, and matched links must open without stealing focus.
 - **i18n discipline.** User-facing strings are English `LocalizedStringKey` / `String(localized:)` keys; translations live in `Resources/<lang>.lproj/Localizable.strings`. Data values (domains, browser names, bundle IDs) use `Text(verbatim:)` and are never localized. Adding a UI string means adding its key to every `*.lproj` catalog + `CFBundleLocalizations`.
 - **Two distributions.** (1) Open-source Developer ID build (`deno task prod`): Hardened Runtime, **no sandbox**, distributed outside the Mac App Store. (2) Paid Mac App Store build (`deno task dist`): assembles an **unsigned** bundle only; App Sandbox is declared in `Resources/SmartLinksOpener.appstore.entitlements` and applied at signing time. Signing, `.pkg` packaging and App Store Connect upload happen **outside this repository** — this repo has no release pipeline and must never gain one. Browser enumeration via LaunchServices and opening URLs in another app via `NSWorkspace` are permitted inside the sandbox (verified; precedent: Velja). Keep MAS entitlements minimal — only `com.apple.security.app-sandbox`.
-- **Licensing.** Source is **GPL-3.0-or-later**. The sole copyright holder ships the paid App Store build under the owner-exception; contributions require the `CONTRIBUTING.md` CLA so they can appear in that build. Do not change the license or relicense contributions without the maintainer's decision.
+- **Licensing.** Source is **PolyForm-Noncommercial-1.0.0** (since 2026-08-16; was GPL-3.0-or-later, which only kept forks out of the App Store and left them free to sell copies elsewhere). Every noncommercial use is granted; selling a build of this code is not. The sole copyright holder is not bound by that grant and ships the paid App Store build; contributions require the `CONTRIBUTING.md` CLA so they can appear in it. Do not change the license or relicense contributions without the maintainer's decision.
 
 ## Project Information
 - Project Name: Reroute
@@ -116,7 +116,7 @@ Maps source code paths to documentation sections that describe them. Used by com
 - `deno.json`, `scripts/*.ts` → Development Commands; SRS FR-DIST, FR-DIST.MAS, FR-APP-ICON (`icon` task)
 - `Resources/SmartLinksOpener.entitlements` → SRS FR-DIST (Developer ID build)
 - `Resources/SmartLinksOpener.appstore.entitlements` → SRS FR-DIST.MAS (sandboxed App Store build)
-- `LICENSE` / `CONTRIBUTING.md` → SRS FR-DIST (GPL-3.0-or-later + CLA)
+- `LICENSE` / `CONTRIBUTING.md` → SRS FR-DIST (PolyForm-Noncommercial-1.0.0 + CLA)
 
 If this section is empty or absent, commit workflows use a default mapping:
 - New/changed exports, classes, types → SDS (component section)
