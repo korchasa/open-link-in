@@ -7,7 +7,7 @@ tags: [ui, rules, i18n]
 related_tasks:
   - "[rules-window-redesign-two-pane](../06/rules-window-redesign-two-pane.md)"
 ---
-# Search rules by domain
+# Search rules by domain [ANC:task:2026-08-search-rules-by-domain]
 
 ## Goal
 
