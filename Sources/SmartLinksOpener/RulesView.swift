@@ -8,7 +8,7 @@ import SwiftUI
 struct RulesView: View {
     @EnvironmentObject var store: AppStore
     @State private var newDomain = ""
-    @State private var newBundleID = ""
+    @State private var newTarget: RuleTarget = .browser("")
     /// What the user typed into the rules search field. [REF:fr:rules-search]
     @State private var query = ""
     @FocusState private var searchFocused: Bool
@@ -45,7 +45,7 @@ struct RulesView: View {
         .frame(minWidth: 560, minHeight: 420)
         .animation(.easeInOut(duration: 0.25), value: store.isDefault)
         .onAppear {
-            if newBundleID.isEmpty { newBundleID = store.pickerBrowsers.first?.bundleID ?? "" }
+            if newTarget == .browser("") { newTarget = .browser(store.pickerBrowsers.first?.bundleID ?? "") }
         }
     }
 
@@ -355,12 +355,12 @@ struct RulesView: View {
                 .textFieldStyle(.roundedBorder)
                 .frame(maxWidth: .infinity)
                 .onSubmit(addRule)
-            BrowserPicker(selection: $newBundleID)
+            BrowserPicker(selection: $newTarget)
                 .frame(width: 150)
             Button("Add", action: addRule)
                 .buttonStyle(.borderedProminent)
                 .controlSize(.regular)
-                .disabled(newDomain.trimmingCharacters(in: .whitespaces).isEmpty || newBundleID.isEmpty)
+                .disabled(newDomain.trimmingCharacters(in: .whitespaces).isEmpty || newTarget == .browser(""))
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 11)
@@ -369,8 +369,8 @@ struct RulesView: View {
 
     private func addRule() {
         let domain = newDomain.trimmingCharacters(in: .whitespaces)
-        guard !domain.isEmpty, !newBundleID.isEmpty else { return }
-        store.addRule(domain: domain, bundleID: newBundleID)
+        guard !domain.isEmpty, newTarget != .browser("") else { return }
+        store.addRule(domain: domain, target: newTarget)
         newDomain = ""
         // Drop any active search — otherwise the rule just added can land
         // outside the filter and look like it was not saved.
@@ -391,7 +391,13 @@ private struct RuleRow: View {
     var body: some View {
         HStack(spacing: 12) {
             HStack(spacing: 9) {
-                if let b = store.browser(forBundleID: rule.bundleID) {
+                if rule.mode == .ask {
+                    // [REF:fr:always-ask]
+                    Image(systemName: "questionmark.circle")
+                        .font(.system(size: 15))
+                        .frame(width: 20, height: 20)
+                        .foregroundStyle(.secondary)
+                } else if let b = store.browser(forBundleID: rule.bundleID) {
                     Image(nsImage: store.icon(for: b))
                         .resizable()
                         .frame(width: 20, height: 20)
@@ -407,8 +413,8 @@ private struct RuleRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            BrowserMenuButton(currentID: rule.bundleID) {
-                store.updateRuleBrowser(rule, bundleID: $0)
+            BrowserMenuButton(current: rule.target) {
+                store.updateRule(rule, target: $0)
             }
             .frame(width: 170)
 
@@ -435,16 +441,22 @@ private struct RuleRow: View {
 ///
 /// Browsers offered match the sidebar toggles; a rule pointing at a now-hidden
 /// or uninstalled browser keeps showing its target. [REF:fr:browser-visibility]
+/// After a separator the menu offers "Always ask", which turns the rule into
+/// one that raises the picker every time. [REF:fr:always-ask]
 private struct BrowserMenuButton: View {
     @EnvironmentObject var store: AppStore
-    let currentID: String
-    let onSelect: (String) -> Void
+    let current: RuleTarget
+    let onSelect: (RuleTarget) -> Void
 
     @State private var anchor = MenuAnchor.Holder()
     @State private var handler = MenuHandler()
 
     private var title: String {
-        store.browser(forBundleID: currentID)?.name ?? (currentID.isEmpty ? "" : "⚠️ \(currentID)")
+        switch current {
+        case .ask: return String(localized: "Always ask")
+        case .browser(let id):
+            return store.browser(forBundleID: id)?.name ?? (id.isEmpty ? "" : "⚠️ \(id)")
+        }
     }
 
     var body: some View {
@@ -481,17 +493,20 @@ private struct BrowserMenuButton: View {
     private func present() {
         guard let view = anchor.view else { return }
         let menu = NSMenu()
-        var listed = store.pickerBrowsers.map { ($0.name, $0.bundleID) }
-        if !listed.contains(where: { $0.1 == currentID }), !currentID.isEmpty {
-            listed.append((title, currentID))
+        var listed: [(String, RuleTarget)] = store.pickerBrowsers.map { ($0.name, .browser($0.bundleID)) }
+        if case .browser(let id) = current, !id.isEmpty, !listed.contains(where: { $0.1 == current }) {
+            listed.append((title, current))
         }
+        listed.append(("", .ask))  // rendered as a separator + "Always ask"
         handler.onSelect = onSelect
-        for (name, id) in listed {
+        for (name, target) in listed {
+            if target == .ask { menu.addItem(.separator()) }
             let item = NSMenuItem(
-                title: name, action: #selector(MenuHandler.pick(_:)), keyEquivalent: "")
+                title: target == .ask ? String(localized: "Always ask") : name,
+                action: #selector(MenuHandler.pick(_:)), keyEquivalent: "")
             item.target = handler
-            item.representedObject = id
-            item.state = id == currentID ? .on : .off
+            item.representedObject = MenuHandler.Box(target)
+            item.state = target == current ? .on : .off
             menu.addItem(item)
         }
         menu.popUp(
@@ -517,11 +532,16 @@ private struct MenuAnchor: NSViewRepresentable {
 /// Menu-item target. `NSMenuItem` needs an ObjC target/action pair, so the
 /// SwiftUI closure is parked here for the lifetime of the button.
 private final class MenuHandler: NSObject {
-    var onSelect: ((String) -> Void)?
+    /// `representedObject` must be an object; the enum rides in one.
+    final class Box {
+        let target: RuleTarget
+        init(_ t: RuleTarget) { target = t }
+    }
+    var onSelect: ((RuleTarget) -> Void)?
 
     @objc func pick(_ sender: NSMenuItem) {
-        guard let id = sender.representedObject as? String else { return }
-        onSelect?(id)
+        guard let box = sender.representedObject as? Box else { return }
+        onSelect?(box.target)
     }
 }
 
@@ -530,19 +550,21 @@ private final class MenuHandler: NSObject {
 /// [REF:fr:browser-visibility]
 private struct BrowserPicker: View {
     @EnvironmentObject var store: AppStore
-    @Binding var selection: String
+    @Binding var selection: RuleTarget
 
     var body: some View {
         let enabled = store.pickerBrowsers
         Picker("", selection: $selection) {
-            ForEach(enabled) { Text(verbatim: $0.name).tag($0.bundleID) }
-            if !enabled.contains(where: { $0.bundleID == selection }) {
-                if let b = store.browser(forBundleID: selection) {
+            ForEach(enabled) { Text(verbatim: $0.name).tag(RuleTarget.browser($0.bundleID)) }
+            if case .browser(let id) = selection, !id.isEmpty, !enabled.contains(where: { $0.bundleID == id }) {
+                if let b = store.browser(forBundleID: id) {
                     Text(verbatim: b.name).tag(selection)
-                } else if !selection.isEmpty {
-                    Text(verbatim: "⚠️ \(selection)").tag(selection)
+                } else {
+                    Text(verbatim: "⚠️ \(id)").tag(selection)
                 }
             }
+            Divider()
+            Text("Always ask").tag(RuleTarget.ask)  // [REF:fr:always-ask]
         }
         .labelsHidden()
     }

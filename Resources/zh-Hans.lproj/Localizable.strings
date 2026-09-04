@@ -39,3 +39,8 @@
 "Search domains" = "搜索域名";
 "Clear search" = "清除搜索";
 "No rules match “%@”." = "没有与“%@”匹配的规则。";
+
+/* Always-ask rule mode [REF:fr:always-ask] */
+"Always ask" = "总是询问";
+"Choose for this link — this site always asks" = "为此链接选择 — 此网站总是询问";
+"change this in Routing rules" = "可在规则中更改";

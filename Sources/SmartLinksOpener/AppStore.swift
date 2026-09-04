@@ -199,14 +199,27 @@ final class AppStore: ObservableObject {
     }
 
     func addRule(domain: String, bundleID: String) {
+        addRule(domain: domain, target: .browser(bundleID))
+    }
+
+    /// Add (or replace) the rule for `domain`, pointing at a browser or at the
+    /// picker itself (always ask). [REF:fr:always-ask]
+    func addRule(domain: String, target: RuleTarget) {
         // Persist the registrable (second-level) domain so every subdomain
         // routes to the chosen browser. [REF:fr:subdomain]
         let d = Domain.registrable(domain)
         guard !d.isEmpty else { return }
         rules.removeAll { $0.domain == d }
-        rules.append(Rule(domain: d, bundleID: bundleID))
+        rules.append(rule(domain: d, target: target))
         rules.sort { $0.domain < $1.domain }
         saveRules()
+    }
+
+    private func rule(domain: String, target: RuleTarget) -> Rule {
+        switch target {
+        case .browser(let id): return Rule(domain: domain, bundleID: id)
+        case .ask: return Rule(domain: domain, bundleID: "", mode: .ask)
+        }
     }
 
     func deleteRule(_ rule: Rule) {
@@ -215,8 +228,14 @@ final class AppStore: ObservableObject {
     }
 
     func updateRuleBrowser(_ rule: Rule, bundleID: String) {
+        updateRule(rule, target: .browser(bundleID))
+    }
+
+    /// Re-point a rule at a browser or switch it to always ask. [REF:fr:always-ask]
+    func updateRule(_ rule: Rule, target: RuleTarget) {
         if let i = rules.firstIndex(where: { $0.id == rule.id }) {
-            rules[i].bundleID = bundleID
+            rules[i] = self.rule(domain: rule.domain, target: target)
+            rules[i].id = rule.id
             saveRules()
         }
     }
@@ -231,18 +250,24 @@ final class AppStore: ObservableObject {
         return domain.isEmpty ? nil : domain
     }
 
-    /// Find a rule whose domain covers this URL's host (exact or any subdomain);
-    /// longest-domain match wins (`bbc.co.uk` beats `co.uk`). [REF:fr:subdomain]
+    /// What the rules say about this URL: open silently, always ask, or no
+    /// rule at all. Longest-domain match wins (`bbc.co.uk` beats `co.uk`).
+    /// [REF:fr:subdomain] [REF:fr:always-ask]
+    func decision(for url: URL) -> Routing.Decision {
+        guard let host = url.host, !host.isEmpty else { return .unmatched }
+        return Routing.decide(host: host, rules: rules, installed: Set(browsers.map(\.bundleID)))
+    }
+
+    /// The installed browser a rule routes this URL to, if any.
     func matchingBrowser(for url: URL) -> Browser? {
-        guard let host = url.host, !host.isEmpty else { return nil }
-        let candidates =
-            rules
-            .filter { Domain.host(host, matchesRule: $0.domain) }
-            .sorted { $0.domain.count > $1.domain.count }
-        for c in candidates {
-            if let b = browser(forBundleID: c.bundleID) { return b }
-        }
+        if case .open(let id) = decision(for: url) { return browser(forBundleID: id) }
         return nil
+    }
+
+    /// Whether an always-ask rule covers this URL, so the picker must not
+    /// remember the choice. [REF:fr:always-ask]
+    func alwaysAsks(_ url: URL) -> Bool {
+        decision(for: url) == .ask
     }
 
     // MARK: - Opening
@@ -270,7 +295,9 @@ final class AppStore: ObservableObject {
     }
 
     func choose(_ browser: Browser, for url: URL, remember: Bool) {
-        if remember, let domain = ruleDomain(for: url) {
+        // An always-ask domain keeps asking: remembering would silently replace
+        // the rule the user set. [REF:fr:always-ask]
+        if remember, !alwaysAsks(url), let domain = ruleDomain(for: url) {
             addRule(domain: domain, bundleID: browser.bundleID)
         }
         open(url, in: browser)

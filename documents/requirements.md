@@ -54,6 +54,13 @@
 - **Acceptance:** automated — `deno task test RuleFilterTests`; `manual — maintainer — typing filters the list live; ✕ clears it; a non-matching query shows the "no rules match" text; adding a rule clears the search and shows it`.
 - **Status:** [x]
 
+### 3.15 FR-ALWAYS-ASK: Always ask for a domain [ANC:fr:always-ask]
+- **Desc:** A rule can be set to **always ask** instead of naming a browser. Every link the rule covers (longest-domain match, same as [REF:fr:route]) raises the picker, and the choice is never remembered — the rule stays. The mode is chosen in the rules window: the "Open in" control (rule row and add row) offers "Always ask" after a separator; such a row shows a question-mark glyph instead of a browser icon. The picker for such a link opens in one-time mode, its header reads "Choose for this link — this site always asks", the ⇧ hint is replaced by "change this in Routing rules", and ⇧ toggles nothing. Stored as `mode: ask` on the rule; rules saved before the field existed decode as `open`.
+- **Tasks:** [REF:task:2026-09-always-ask-rule-mode | always-ask-rule-mode]
+- **Scenario:** Rules window → set `github.com` to "Always ask" → open `https://gist.github.com/x` → picker appears in one-time mode → pick Safari → opens in Safari; the rule still says "Always ask"; the next github link asks again.
+- **Acceptance:** automated — `deno task test RoutingTests` (ask decision, longest match across modes, no browser needed, legacy JSON decodes as open); `manual — maintainer — "Always ask" offered in both dropdowns; the row shows a question mark; a covered link opens the picker in one-time mode with the always-ask header and no ⇧ hint; choosing does not change the rule`.
+- **Status:** [x]
+
 ### 3.12 FR-BROWSER-VISIBILITY: Hide browsers from picker [ANC:fr:browser-visibility]
 - **Desc:** Settings sidebar toggles per-browser picker visibility. The "hidden" set is stored (not "visible"), so newly installed browsers appear by default. Hiding the last visible browser is blocked (picker can never be empty). Picker and rule/add dropdowns offer only non-hidden browsers; a rule already pointing at a hidden/uninstalled browser keeps showing its target.
 - **Tasks:** [REF:task:2026-06-settings-window-browser-visibility | settings-window-browser-visibility]

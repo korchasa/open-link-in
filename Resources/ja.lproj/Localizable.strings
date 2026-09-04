@@ -39,3 +39,8 @@
 "Search domains" = "ドメインを検索";
 "Clear search" = "検索をクリア";
 "No rules match “%@”." = "「%@」に一致するルールはありません。";
+
+/* Always-ask rule mode [REF:fr:always-ask] */
+"Always ask" = "毎回確認";
+"Choose for this link — this site always asks" = "このリンクの開き先を選択 — このサイトは毎回確認します";
+"change this in Routing rules" = "ルールで変更できます";

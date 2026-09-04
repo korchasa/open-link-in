@@ -25,7 +25,13 @@ struct PickerView: View {
     /// A local file has no domain → no rule can be created, so the picker is
     /// always in one-time-open mode for files (⇧ is irrelevant). [REF:fr:file-open]
     private var isFile: Bool { url.isFileURL }
-    private var openOnce: Bool { shiftHeld || isFile }
+    /// An always-ask rule covers this domain: the picker opens in one-time mode
+    /// and ⇧ has nothing to toggle — the rule is changed in the rules window.
+    /// [REF:fr:always-ask]
+    private var alwaysAsks: Bool { store.alwaysAsks(url) }
+    /// Whether ⇧ has a meaning here: it toggles only where a rule could be made.
+    private var shiftMatters: Bool { !isFile && !alwaysAsks }
+    private var openOnce: Bool { shiftHeld || isFile || alwaysAsks }
     private var selectedBrowser: Browser? {
         browsers.indices.contains(selected) ? browsers[selected] : nil
     }
@@ -55,7 +61,7 @@ struct PickerView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(openOnce ? "Open once — no rule created" : "Open & remember")
+            Text(headerLabel)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(shiftHeld ? Color(nsColor: .systemOrange) : Color.secondary)
             Text(title)
@@ -68,6 +74,11 @@ struct PickerView: View {
         .padding(.horizontal, 16)
         .padding(.top, 15)
         .padding(.bottom, 13)
+    }
+
+    private var headerLabel: LocalizedStringKey {
+        if alwaysAsks { return "Choose for this link — this site always asks" }
+        return openOnce ? "Open once — no rule created" : "Open & remember"
     }
 
     // MARK: Vertical list of browsers
@@ -140,8 +151,14 @@ struct PickerView: View {
     private var footer: some View {
         HStack(spacing: 8) {
             // The ⇧ open-once toggle is meaningless for local files (no domain,
-            // so no rule can ever be created). [REF:fr:file-open]
-            if !isFile {
+            // so no rule can ever be created) [REF:fr:file-open] and for an
+            // always-ask domain, where the hint points at the rules window
+            // instead. [REF:fr:always-ask]
+            if alwaysAsks {
+                Text("change this in Routing rules")
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Color.secondary)
+            } else if shiftMatters {
                 Text(verbatim: "⇧ Shift")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(shiftHeld ? Color.white : Color.secondary)
@@ -189,7 +206,7 @@ struct PickerView: View {
 
     private func handle(_ command: KeyCommand) {
         if case .shift(let held) = command {
-            shiftHeld = held
+            shiftHeld = held && shiftMatters
             return
         }
         guard !browsers.isEmpty else {

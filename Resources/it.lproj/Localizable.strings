@@ -39,3 +39,8 @@
 "Search domains" = "Cerca domini";
 "Clear search" = "Cancella ricerca";
 "No rules match “%@”." = "Nessuna regola corrisponde a «%@».";
+
+/* Always-ask rule mode [REF:fr:always-ask] */
+"Always ask" = "Chiedi sempre";
+"Choose for this link — this site always asks" = "Scegli per questo link — questo sito chiede sempre";
+"change this in Routing rules" = "modificabile nelle regole";
