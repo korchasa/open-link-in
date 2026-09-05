@@ -136,9 +136,18 @@ struct RulesView: View {
         HStack(spacing: 10) {
             brandTile(size: 30, cornerRadius: 8)
                 .shadow(color: Color(red: 1.0, green: 0.18, blue: 0.33).opacity(0.34), radius: 3, y: 2)
-            Text("Reroute")
-                .font(.system(size: 13.5, weight: .bold))
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(verbatim: AppIdentity.displayName)
+                    .font(.system(size: 13.5, weight: .bold))
+                    .fixedSize(horizontal: false, vertical: true)
+                // Which build this is: the dev copy carries its commit in
+                // the version string, so it reads e.g. "1.0.1-dev 2b2d29e".
+                if AppIdentity.isDev {
+                    Text(verbatim: AppIdentity.version)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(Color(nsColor: .systemOrange))
+                }
+            }
         }
         .padding(.horizontal, 16)
         .padding(.top, 14)

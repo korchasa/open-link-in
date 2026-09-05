@@ -38,7 +38,9 @@
 
 Две конфигурации сборки:
 - `deno task prod` — открытая сборка, подпись Developer ID, Hardened Runtime, без
-  песочницы (распространение вне App Store: DMG/zip).
+  песочницы (распространение вне App Store: DMG/zip). Локально она ставится в
+  `/Applications` как «Reroute Dev» с собственным bundle id и живёт рядом с
+  версией из App Store.
 - `deno task dist` — **неподписанный** бандл для Mac App Store. App Sandbox
   объявлен в `Resources/SmartLinksOpener.appstore.entitlements` и применяется
   при подписи, которая выполняется вне этого репозитория.

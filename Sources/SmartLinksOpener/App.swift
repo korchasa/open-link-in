@@ -12,9 +12,17 @@ struct SmartLinksOpenerApp: App {
         MenuBarExtra {
             MenuContent(store: store)
         } label: {
-            Image(nsImage: MenuBarIcon.statusItem())
-                .renderingMode(.original)
-                .accessibilityLabel(Text("Reroute"))
+            // The dev copy says so in the menu bar, so a build under test is
+            // never mistaken for the store build sitting next to it.
+            HStack(spacing: 3) {
+                Image(nsImage: MenuBarIcon.statusItem())
+                    .renderingMode(.original)
+                if AppIdentity.isDev {
+                    Text(verbatim: "DEV")
+                        .font(.system(size: 9, weight: .bold))
+                }
+            }
+            .accessibilityLabel(Text(verbatim: AppIdentity.displayName))
         }
     }
 }
@@ -112,7 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if rulesWindow == nil {
             let host = NSHostingController(rootView: RulesView().environmentObject(store))
             let window = NSWindow(contentViewController: host)
-            window.title = "Reroute"
+            window.title = AppIdentity.displayName
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.isReleasedWhenClosed = false
             window.minSize = NSSize(width: 560, height: 420)

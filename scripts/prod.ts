@@ -1,14 +1,13 @@
 /**
- * `deno task prod` — build the .app, sign it ad-hoc and register it with
- * LaunchServices, so the locally installed browser-router is the code you just
- * wrote. This is the open-source build; the App Store bundle is `dist`.
+ * `deno task prod` — build the .app, sign it ad-hoc and install it in
+ * /Applications as "Reroute Dev" (see install.ts), so the locally installed
+ * browser-router is the code you just wrote and sits next to the store build.
+ * This is the open-source build; the App Store bundle is `dist`.
  */
 
 import { run, section } from "./lib.ts";
 import { APP_NAME, assembleBundle, buildRelease, copyLooseIcon } from "./bundle.ts";
-
-const LSREGISTER =
-  "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister";
+import { installDevCopy, INSTALLED } from "./install.ts";
 
 export async function prod(): Promise<void> {
   await buildRelease();
@@ -34,11 +33,10 @@ export async function prod(): Promise<void> {
     console.log("    (codesign skipped/failed — app still runnable locally)");
   }
 
-  section("Registering with LaunchServices");
-  await run(LSREGISTER, { args: ["-f", `${Deno.cwd()}/${APP_NAME}`], allowFailure: true });
+  await installDevCopy(APP_NAME);
 
-  section(`Done: ${Deno.cwd()}/${APP_NAME}`);
-  console.log(`    Open it once (open ${APP_NAME}), then click 'Set as default browser'.`);
+  section(`Done: ${INSTALLED}`);
+  console.log("    Click 'Set as default browser' in it to route links through this build.");
 }
 
 if (import.meta.main) await prod();
