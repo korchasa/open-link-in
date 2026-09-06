@@ -152,7 +152,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         positionNearCursor(panel)
         pickerWindow = panel
         NSApp.activate(ignoringOtherApps: true)
+        // Fade in from where it sits, so it reads as a popover hanging off the
+        // click rather than a window that popped up. Keyboard input is live from
+        // the first frame; only the alpha animates.
+        panel.alphaValue = 0
         panel.makeKeyAndOrderFront(nil)
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.2
+            panel.animator().alphaValue = 1
+        }
     }
 
     /// Anchor the panel's top-left corner just right of and below the cursor, so
@@ -172,8 +180,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func closePicker() {
-        pickerWindow?.orderOut(nil)
+        guard let panel = pickerWindow else { return }
         pickerWindow = nil
+        // Leave the same way it came: a fade of the same length. The browser is
+        // already opening by now, so nothing waits on it.
+        NSAnimationContext.runAnimationGroup(
+            { ctx in
+                ctx.duration = 0.2
+                panel.animator().alphaValue = 0
+            }, completionHandler: { panel.orderOut(nil) })
     }
 }
 

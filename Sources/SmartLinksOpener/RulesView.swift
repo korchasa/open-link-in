@@ -43,7 +43,7 @@ struct RulesView: View {
             }
         }
         .frame(minWidth: 560, minHeight: 420)
-        .animation(.easeInOut(duration: 0.25), value: store.isDefault)
+        .animation(Motion.standard, value: store.isDefault)
         .onAppear {
             if newTarget == .browser("") { newTarget = .browser(store.pickerBrowsers.first?.bundleID ?? "") }
         }
@@ -348,9 +348,14 @@ struct RulesView: View {
                 LazyVStack(spacing: 0) {
                     ForEach(visibleRules) { rule in
                         RuleRow(rule: rule)
+                            .transition(.opacity)
                         Divider()
                     }
                 }
+                // Animate on add/delete only, keyed on the stored rules: the
+                // search filter changes `visibleRules` on every keystroke and
+                // must stay instant, or typing stutters again.
+                .animation(Motion.standard, value: store.rules.map(\.id))
             }
             .frame(maxHeight: .infinity)
         }

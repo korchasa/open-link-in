@@ -55,6 +55,10 @@ struct PickerView: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
         .overlay(alignment: .topTrailing) { closeButton }
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        // ⇧ flips the accent everywhere at once; a short fade keeps the flip from
+        // reading as a flicker. The ↑/↓ highlight stays instant on purpose — that
+        // is how keyboard selection moves in every Apple list.
+        .animation(Motion.snappy, value: shiftHeld)
     }
 
     // MARK: Header — mode label + domain
