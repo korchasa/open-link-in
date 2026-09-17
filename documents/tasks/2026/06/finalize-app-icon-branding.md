@@ -19,7 +19,7 @@ upload.
 
 ### Context
 
-Final artwork was delivered in `/Users/korchasa/Downloads/appstore/`:
+Final artwork was delivered outside the repository as:
 `AppIcon.svg` (vector source), `AppIcon-1024.png` (App Store master),
 `AppIcon.appiconset/` (10 sized PNGs + Contents.json, Xcode naming), `icons/`
 (flat duplicates), and `screenshot-1..3.png` (1280×800 App Store shots).
