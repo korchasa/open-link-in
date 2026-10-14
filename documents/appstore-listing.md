@@ -7,7 +7,7 @@ Fill the App Store Connect form with the fields below. Two locales: English
 - **Bundle ID:** `dev.korchasa.SmartLinksOpener`
 - **Primary category:** Utilities
 - **Secondary category:** Productivity
-- **Price:** Tier ≈ US $2.99 / €3.49 (closest to "$3")
+- **Price:** US $1.99 / €1.99
 - **Privacy policy URL:** `https://github.com/korchasa/open-link-in/blob/main/PRIVACY.md`
 - **Support URL:** `https://github.com/korchasa/open-link-in`
 - **Marketing URL (optional):** `https://github.com/korchasa/open-link-in`

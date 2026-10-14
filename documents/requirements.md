@@ -99,10 +99,10 @@
 - **Status:** [x]
 
 ### 3.11 FR-DIST.MAS: Paid sandboxed Mac App Store build [ANC:fr:dist.mas]
-- **Desc:** A separate sandboxed build for the Mac App Store (App Sandbox mandatory), sold at a small price (~$3/€3). Source stays public under PolyForm-Noncommercial-1.0.0, which grants no commercial use, so only the copyright holder may publish a paid binary. This repo builds the **unsigned** bundle via `deno task dist` and nothing more — signing, `.pkg` packaging and App Store Connect upload happen outside it, so no credential or store API key lives here.
+- **Desc:** A separate sandboxed build for the Mac App Store (App Sandbox mandatory), sold at a small price ($1.99 / €1.99). Source stays public under PolyForm-Noncommercial-1.0.0, which grants no commercial use, so only the copyright holder may publish a paid binary. This repo builds the **unsigned** bundle via `deno task dist` and nothing more — signing, `.pkg` packaging and App Store Connect upload happen outside it, so no credential or store API key lives here.
 - **Scenario:** `deno task dist` → unsigned `.build/dist/SmartLinksOpener.app` (icon as a compiled asset catalog); signed elsewhere with `Resources/SmartLinksOpener.appstore.entitlements`, then runs sandboxed (container created), enumerates browsers, shows picker.
 - **Acceptance:** `deno task dist && test -x .build/dist/SmartLinksOpener.app/Contents/MacOS/SmartLinksOpener && test -f .build/dist/SmartLinksOpener.app/Contents/Resources/Assets.car && /usr/libexec/PlistBuddy -c 'Print :com.apple.security.app-sandbox' Resources/SmartLinksOpener.appstore.entitlements | grep -q true`. Signing, upload and pricing: `manual — maintainer — performed outside this repository`.
-- **Status:** [x] (build) / [ ] (uploaded & priced — maintainer step)
+- **Status:** [x] (build) / [x] (uploaded & priced — on sale at $1.99; evidence: `curl -s 'https://itunes.apple.com/lookup?id=6781828998&country=us' | jq '.results[0].price'` → `1.99`)
 
 ### 3.13 FR-APP-ICON: Brand app icon & menu-bar branding [ANC:fr:app-icon]
 - **Desc:** Ships the final brand icon, reproducible from committed source (`Resources/AppIcon.iconset/` → `Resources/AppIcon.icns` via `deno task icon`), carrying the 1024px (512@2x) representation App Store validation requires; the vector source (`AppIcon.svg`) and 1024 master (`AppIcon-1024.png`) are committed for re-export and App Store Connect upload. The menu bar shows a monochrome template glyph (the `link` SF Symbol) per standard macOS convention — the system auto-tints it for light/dark menu bars.
