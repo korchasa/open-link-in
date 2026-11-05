@@ -200,8 +200,12 @@ Dispositions (union of the scout's list and own enumeration):
   - Agent-verified 2026-11-05 on Reroute Dev (window list via
     `CGWindowListCopyWindowInfo`): untouched picker gone ~60 s after the link;
     link after 4 s → new panel id (displaced); link 1.2 s later → same panel
-    (queued). Owner still to walk: matched link after an abandoned picker, the
-    "+1" badge text, choose-with-remember opening a queued same-site link.
+    (queued). Second pass: matched link 5.5 s after an unmatched one → no
+    panel left; burst of 2 → screenshot shows "+1" in the footer. Both passes
+    confounded by the owner's live desktop: probe panels became key and one got
+    a Return/1 from another app (stray rule `reroute-probe-a.invalid` appeared;
+    removed). Owner still to walk: choose-with-remember opening a queued
+    same-site link (needs real key input; not injected into the owner's screen).
 - [x] FR-PICKER: a shown or queued link whose site gains a rule in the rules
       window opens by itself and the picker moves on.
   - Test: `Tests/SmartLinksOpenerTests/PickerQueueTests.swift` (reroute cases)
@@ -312,3 +316,4 @@ every reschedule, and a cancelled sleep exits without touching state.
 
 - Orphaned panel on overlapping `showPicker`/`closePicker` (scout, "could not rule out"): no evidence it happens; revisit if a panel survives an expiry.
 - Panel `collectionBehavior` across Spaces / fullscreen: not set; the timer closes the panel wherever it sits, so not needed for this fix.
+- Picker takes keyboard focus from the app the user types in (`showPicker` calls `NSApp.activate(ignoringOtherApps:)` + `makeKeyAndOrderFront`, by keyboard-first design): a Return or digit meant for that app picks a browser and may create a rule. Seen 2026-11-05 during probes. Pre-existing, outside this fix; product decision.

@@ -113,8 +113,9 @@ ad-hoc подписью и регистрирует бандл в LaunchServices
 
 ## Как это устроено
 
-- `App.swift` — точка входа (`SwiftUI.App`), ловит входящие ссылки через
-  `.onOpenURL`.
+- `App.swift` — точка входа (`SwiftUI.App`) и `AppDelegate`. Веб-ссылки
+  приходят системным событием Apple `kAEGetURL`, локальные файлы — через
+  `application(_:open:)`; оба пути передают ссылку в `AppStore.handleIncoming`.
 - `AppStore.swift` — состояние: список браузеров, правила (хранятся в
   `UserDefaults`), сопоставление домена с браузером, открытие ссылки в
   конкретном приложении через `NSWorkspace`.
