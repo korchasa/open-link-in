@@ -122,6 +122,9 @@ ad-hoc подписью и регистрирует бандл в LaunchServices
   уровня (registrable domain, eTLD+1) и проверка поддоменного совпадения.
   Покрыта юнит-тестами (`Tests/SmartLinksOpenerTests/DomainTests.swift`).
 - `PickerView.swift` — окно выбора браузера для нового домена.
+- `PickerQueue.swift` — очередь ссылок, ждущих выбора. Нетронутое окно
+  закрывается само через 60 секунд, а через 3 секунды уступает следующей
+  ссылке. Покрыта юнит-тестами (`Tests/SmartLinksOpenerTests/PickerQueueTests.swift`).
 - `RulesView.swift` — окно управления правилами и статусом браузера по умолчанию.
 - `Resources/Info.plist` — объявляет `CFBundleURLTypes` со схемами `http`/`https`,
   благодаря чему система видит приложение как браузер.

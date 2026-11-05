@@ -19,11 +19,16 @@ final class AppStore: ObservableObject {
     /// returning to this app). [REF:fr:default-browser]
     @Published private(set) var isDefault: Bool = false
 
-    /// FIFO queue of links awaiting a picker decision, so a burst of links from
-    /// another app is never silently dropped. [REF:fr:picker]
-    @Published private var pendingURLs: [URL] = []
-    var pendingURL: URL? { pendingURLs.first }
-    var pendingCount: Int { pendingURLs.count }
+    /// Links awaiting a picker decision. A burst queues; a picker the user
+    /// walked away from expires or gives way to the next link. Not published:
+    /// activity (mouse moves) updates it constantly, so only the two values the
+    /// picker shows are published, and only when they change. [REF:fr:picker]
+    private var queue = PickerQueue()
+    @Published private(set) var pendingURL: URL?
+    @Published private(set) var pendingCount: Int = 0
+    /// Closes an idle picker; replaced whenever a head is shown, cancelled
+    /// when the queue empties.
+    private var expiryTask: Task<Void, Never>?
 
     /// Per-browser open counts, used to order the picker by frequency.
     @Published private(set) var usageCounts: [String: Int] = [:]
@@ -205,6 +210,13 @@ final class AppStore: ObservableObject {
     /// Add (or replace) the rule for `domain`, pointing at a browser or at the
     /// picker itself (always ask). [REF:fr:always-ask]
     func addRule(domain: String, target: RuleTarget) {
+        storeRule(domain: domain, target: target)
+        rerouteQueue()
+    }
+
+    /// Add (or replace) a rule without touching the queue — `choose` opens and
+    /// advances on its own, so rerouting here would open the chosen link twice.
+    private func storeRule(domain: String, target: RuleTarget) {
         // Persist the registrable (second-level) domain so every subdomain
         // routes to the chosen browser. [REF:fr:subdomain]
         let d = Domain.registrable(domain)
@@ -237,6 +249,7 @@ final class AppStore: ObservableObject {
             rules[i] = self.rule(domain: rule.domain, target: target)
             rules[i].id = rule.id
             saveRules()
+            rerouteQueue()
         }
     }
 
@@ -284,21 +297,27 @@ final class AppStore: ObservableObject {
     /// Entry point for an incoming link from the system. The app stays resident
     /// in the background afterwards — matched links open silently, unmatched
     /// links are queued and raise the picker.
+    /// An abandoned picker never outlives the next link: a matched link closes
+    /// it before opening, an unmatched one replaces it. [REF:fr:picker]
     func handleIncoming(_ url: URL) {
+        let now = Date()
         if let b = matchingBrowser(for: url) {
+            if queue.dropIfAbandoned(now: now) { pickerHeadChanged() }
             open(url, in: b)
             return
         }
-        let wasEmpty = pendingURLs.isEmpty
-        pendingURLs.append(url)
-        if wasEmpty { onShowPicker?() }
+        if queue.enqueue(url, now: now) == .showHead {
+            pickerHeadChanged()
+        } else {
+            publishQueue()
+        }
     }
 
     func choose(_ browser: Browser, for url: URL, remember: Bool) {
         // An always-ask domain keeps asking: remembering would silently replace
         // the rule the user set. [REF:fr:always-ask]
         if remember, !alwaysAsks(url), let domain = ruleDomain(for: url) {
-            addRule(domain: domain, bundleID: browser.bundleID)
+            storeRule(domain: domain, target: .browser(browser.bundleID))
         }
         open(url, in: browser)
         advanceQueue()
@@ -308,13 +327,75 @@ final class AppStore: ObservableObject {
         advanceQueue()
     }
 
-    /// Drop the handled link and either show the next queued one or close.
+    /// The user touched the picker (key, ⇧, mouse over it): keeps it from
+    /// counting as abandoned. [REF:fr:picker]
+    func notePickerActivity() {
+        queue.noteActivity(now: Date())
+    }
+
+    /// Drop the handled link, open every queued link a rule now covers, then
+    /// show the next one or close.
     private func advanceQueue() {
-        if !pendingURLs.isEmpty { pendingURLs.removeFirst() }
-        if pendingURLs.isEmpty {
+        let routed = queue.advance(now: Date()) { self.matchingBrowser(for: $0) != nil }
+        openRouted(routed)
+        pickerHeadChanged()
+    }
+
+    /// A rule was added or re-pointed: queued links it covers — the shown one
+    /// included — open by themselves. [REF:fr:picker]
+    private func rerouteQueue() {
+        guard queue.count > 0 else { return }
+        let before = queue.head
+        let routed = queue.reroute(now: Date()) { self.matchingBrowser(for: $0) != nil }
+        openRouted(routed)
+        if queue.head != before { pickerHeadChanged() } else { publishQueue() }
+    }
+
+    private func openRouted(_ urls: [URL]) {
+        for u in urls {
+            if let b = matchingBrowser(for: u) { open(u, in: b) }
+        }
+    }
+
+    /// The queue's head changed (shown, replaced, or gone): sync the panel and
+    /// restart the idle timer.
+    private func pickerHeadChanged() {
+        publishQueue()
+        if queue.head == nil {
+            expiryTask?.cancel()
+            expiryTask = nil
             onClosePicker?()
         } else {
             onShowPicker?()
+            scheduleExpiryCheck()
+        }
+    }
+
+    /// Publish only real changes, so activity updates do not re-render the picker.
+    private func publishQueue() {
+        if pendingURL != queue.head { pendingURL = queue.head }
+        if pendingCount != queue.count { pendingCount = queue.count }
+    }
+
+    /// Wake when the head would expire; if it was touched meanwhile, sleep
+    /// again for the rest. The sleep runs on `ContinuousClock`, which keeps
+    /// counting while the Mac sleeps. [REF:fr:picker]
+    private func scheduleExpiryCheck() {
+        expiryTask?.cancel()
+        guard let delay = queue.secondsUntilExpiry(now: Date()) else {
+            expiryTask = nil
+            return
+        }
+        expiryTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+            // `try?` swallows the cancellation; this guard is what stops a
+            // timer that was replaced while it slept.
+            guard !Task.isCancelled, let self else { return }
+            if self.queue.expireIfIdle(now: Date()) {
+                self.pickerHeadChanged()
+            } else {
+                self.scheduleExpiryCheck()
+            }
         }
     }
 

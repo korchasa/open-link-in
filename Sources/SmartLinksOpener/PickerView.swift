@@ -55,6 +55,11 @@ struct PickerView: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
         .overlay(alignment: .topTrailing) { closeButton }
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        // The mouse over the panel is the user at the picker, so it keeps the
+        // picker from counting as abandoned. [REF:fr:picker]
+        .onContinuousHover { phase in
+            if case .active = phase { store.notePickerActivity() }
+        }
         // ⇧ flips the accent everywhere at once; a short fade keeps the flip from
         // reading as a flicker. The ↑/↓ highlight stays instant on purpose — that
         // is how keyboard selection moves in every Apple list.
@@ -209,6 +214,7 @@ struct PickerView: View {
     // MARK: Keyboard
 
     private func handle(_ command: KeyCommand) {
+        store.notePickerActivity()  // [REF:fr:picker]
         if case .shift(let held) = command {
             shiftHeld = held && shiftMatters
             return
