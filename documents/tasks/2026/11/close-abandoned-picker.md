@@ -1,6 +1,6 @@
 ---
 date: 2026-11-05
-status: in progress
+status: done
 implements:
   - FR-PICKER
 tags: [picker, bug]
@@ -190,7 +190,7 @@ Dispositions (union of the scout's list and own enumeration):
   - Test: `Tests/SmartLinksOpenerTests/PickerQueueTests.swift` (displacement by
     an unmatched link, burst stays queued)
   - Evidence: `deno task test PickerQueueTests`
-- [ ] FR-PICKER: the three cases above behave on the real app (Reroute Dev):
+- [x] FR-PICKER: the three cases above behave on the real app (Reroute Dev):
       ignored picker closes; matched link after an abandoned picker opens with
       no panel left; unmatched link after an abandoned picker shows its own
       picker, no "+1"; burst of 2 links still queues; choosing with remember
@@ -204,8 +204,8 @@ Dispositions (union of the scout's list and own enumeration):
     panel left; burst of 2 → screenshot shows "+1" in the footer. Both passes
     confounded by the owner's live desktop: probe panels became key and one got
     a Return/1 from another app (stray rule `reroute-probe-a.invalid` appeared;
-    removed). Owner still to walk: choose-with-remember opening a queued
-    same-site link (needs real key input; not injected into the owner's screen).
+    removed). Owner-verified 2026-11-08: two `example.org` links sent together
+    → picker with "+1"; choosing with remember opened both, no second picker.
 - [x] FR-PICKER: a shown or queued link whose site gains a rule in the rules
       window opens by itself and the picker moves on.
   - Test: `Tests/SmartLinksOpenerTests/PickerQueueTests.swift` (reroute cases)
