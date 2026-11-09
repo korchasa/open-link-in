@@ -9,6 +9,6 @@ Agent-maintained navigation across linkable artifacts (FR / SDS / NFR).
 - [REF:fr:browser-visibility | FR-BROWSER-VISIBILITY] — Choose which browsers appear in the picker; hidden ones excluded from list + frequency order, persisted — [x]
 - [REF:fr:file-open | FR-FILE-OPEN] — Local HTML files (handed to the app as default browser) route through the picker; filename title, no rule created — [ ]
 - [REF:fr:picker | FR-PICKER] — Picker for unmatched links: frequency-ordered browsers, quick keys, open & remember, FIFO queue — [x]
-- [REF:fr:rating-request | FR-RATING-REQUEST] — System App Store rating request: due at the 3rd routed link, made when the rules window opens, once per app version — [x]
+- [REF:fr:rating-request | FR-RATING-REQUEST] — System App Store rating request: due at the 3rd routed link, not on the first day of use, made when the user closes the rules window, once per app version — [x]
 - [REF:fr:rules-mgmt | FR-RULES-MGMT] — Two-pane rules window: browser sidebar + rules pane; change/delete/add a rule — [x]
 - [REF:fr:rules-search | FR-RULES-SEARCH] — Search field in the rules pane; substring domain filter, case/accent-insensitive, own empty state — [x]

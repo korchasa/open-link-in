@@ -61,8 +61,8 @@ final class AppStore: ObservableObject {
     private let hiddenKey = "hiddenBrowsers.v1"
     private let reviewKey = "reviewPrompt.v1"
 
-    /// Successful routings toward the App Store rating request; asked from the
-    /// rules window, never over the browser a link just went to.
+    /// Successful routings toward the App Store rating request; asked when the
+    /// user closes the rules window, never over the browser a link just went to.
     /// [REF:fr:rating-request]
     private var reviewPrompt = ReviewPrompt()
     /// Local log of the rating gate only — counts and version, never a URL.
@@ -339,28 +339,47 @@ final class AppStore: ObservableObject {
             return
         }
         let version = AppIdentity.version
-        reviewPrompt.noteSuccess(version: version)
+        reviewPrompt.noteSuccess(version: version, at: Date())
         saveReviewPrompt()
         reviewLog.info(
             "routing succeeded: \(self.reviewPrompt.successes, privacy: .public)/\(ReviewPrompt.threshold, privacy: .public) toward a rating request in \(version, privacy: .public)"
         )
     }
 
-    /// Called when the rules window opens: true when a rating request is due,
-    /// which also records it for the running version so it is made once.
+    /// Called when the user closes the rules window: true when a rating
+    /// request is due, which also records it for the running version so it is
+    /// made once. The caller must make the request whenever this returns true.
     /// [REF:fr:rating-request]
-    func takeReviewRequest() -> Bool {
+    func takeReviewRequest(at moment: ReviewPrompt.Moment) -> Bool {
         let version = AppIdentity.version
-        guard reviewPrompt.isDue(version: version) else {
-            reviewLog.info(
-                "rules window opened, no rating request: \(self.reviewPrompt.successes, privacy: .public)/\(ReviewPrompt.threshold, privacy: .public), requested in \(self.reviewPrompt.requestedVersion ?? "none", privacy: .public)"
-            )
+        guard reviewPrompt.isDue(at: moment, version: version, now: Date(), calendar: .current) else {
+            logReviewGate(moment, "no rating request")
             return false
         }
         reviewPrompt.markRequested(version: version)
         saveReviewPrompt()
-        reviewLog.info("rules window opened, rating requested in \(version, privacy: .public)")
+        reviewLog.info("\(Self.describe(moment), privacy: .public), rating requested in \(version, privacy: .public)")
         return true
+    }
+
+    /// Opening the rules window starts a task there, so it never asks; this
+    /// only logs where the gate stands. [REF:fr:rating-request]
+    func noteRulesWindowOpened() {
+        logReviewGate(.rulesWindowOpened, "no rating request on open")
+    }
+
+    private func logReviewGate(_ moment: ReviewPrompt.Moment, _ outcome: String) {
+        let firstDay = reviewPrompt.isFirstDayOfUse(now: Date(), calendar: .current)
+        reviewLog.info(
+            "\(Self.describe(moment), privacy: .public), \(outcome, privacy: .public): \(self.reviewPrompt.successes, privacy: .public)/\(ReviewPrompt.threshold, privacy: .public), first day of use \(firstDay ? "yes" : "no", privacy: .public), requested in \(self.reviewPrompt.requestedVersion ?? "none", privacy: .public)"
+        )
+    }
+
+    private static func describe(_ moment: ReviewPrompt.Moment) -> String {
+        switch moment {
+        case .rulesWindowOpened: "rules window opened"
+        case .rulesWindowClosed: "rules window closed"
+        }
     }
 
     /// Entry point for an incoming link from the system. The app stays resident

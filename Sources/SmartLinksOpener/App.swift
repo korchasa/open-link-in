@@ -61,7 +61,7 @@ struct MenuContent: View {
 /// windows here (rather than as SwiftUI scenes) lets the agent stay window-less
 /// in the background and present UI only when needed.
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let store = AppStore.shared
     private var rulesWindow: NSWindow?
     private var pickerWindow: NSWindow?
@@ -124,6 +124,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.title = AppIdentity.displayName
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.isReleasedWhenClosed = false
+            window.delegate = self
             window.minSize = NSSize(width: 560, height: 420)
             // Remember the user's size; only apply the default when nothing was restored.
             window.setFrameAutosaveName("RulesWindow")
@@ -135,13 +136,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         NSApp.activate(ignoringOtherApps: true)
         rulesWindow?.makeKeyAndOrderFront(nil)
-        // The rating request waits for the user to open Reroute's own window:
-        // a picker choice hands focus to the browser, and a matched link shows
-        // no Reroute UI at all. `StoreKit.` — the app's own type is `AppStore`.
+        // Opening the window starts a task there: no rating request now.
         // [REF:fr:rating-request]
-        if store.takeReviewRequest(), let host = rulesWindow?.contentViewController {
+        store.noteRulesWindowOpened()
+    }
+
+    /// The user closes the rules window (close button, ⌘W): the end of what
+    /// they came to do, so the one moment a due rating request is made. A
+    /// picker choice hands focus to the browser and a matched link shows no
+    /// Reroute UI, so neither asks. The request is made here, while the window
+    /// is still on screen and its view controller still hosted; the sheet is
+    /// a separate system window and outlives it. `StoreKit.` — the app's own
+    /// type is also `AppStore`. [REF:fr:rating-request]
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if sender === rulesWindow, store.takeReviewRequest(at: .rulesWindowClosed),
+            let host = sender.contentViewController
+        {
             StoreKit.AppStore.requestReview(in: host)
         }
+        return true
     }
 
     func showPicker() {
