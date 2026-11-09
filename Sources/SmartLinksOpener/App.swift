@@ -1,4 +1,5 @@
 import AppKit
+import StoreKit
 import SwiftUI
 
 @main
@@ -134,6 +135,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         NSApp.activate(ignoringOtherApps: true)
         rulesWindow?.makeKeyAndOrderFront(nil)
+        // The rating request waits for the user to open Reroute's own window:
+        // a picker choice hands focus to the browser, and a matched link shows
+        // no Reroute UI at all. `StoreKit.` — the app's own type is `AppStore`.
+        // [REF:fr:rating-request]
+        if store.takeReviewRequest(), let host = rulesWindow?.contentViewController {
+            StoreKit.AppStore.requestReview(in: host)
+        }
     }
 
     func showPicker() {

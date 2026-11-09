@@ -1,6 +1,7 @@
 import AppKit
 import ServiceManagement
 import SwiftUI
+import os
 
 /// Central state: installed browsers, routing rules, and the link currently
 /// awaiting a decision.
@@ -58,12 +59,22 @@ final class AppStore: ObservableObject {
     private let defaultsKey = "rules.v1"
     private let usageKey = "usage.v1"
     private let hiddenKey = "hiddenBrowsers.v1"
+    private let reviewKey = "reviewPrompt.v1"
+
+    /// Successful routings toward the App Store rating request; asked from the
+    /// rules window, never over the browser a link just went to.
+    /// [REF:fr:rating-request]
+    private var reviewPrompt = ReviewPrompt()
+    /// Local log of the rating gate only — counts and version, never a URL.
+    private let reviewLog = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "dev.korchasa.SmartLinksOpener", category: "review")
     private var ownBundleID: String { Bundle.main.bundleIdentifier ?? "dev.korchasa.SmartLinksOpener" }
 
     private init() {
         loadRules()
         loadUsage()
         loadHidden()
+        loadReviewPrompt()
         refreshBrowsers()
         refreshDefaultBrowserStatus()
         // Direct assignment in init does not fire the didSet observer.
@@ -289,9 +300,67 @@ final class AppStore: ObservableObject {
         recordUse(browser.bundleID)
         let cfg = NSWorkspace.OpenConfiguration()
         cfg.activates = true
+        // Only a link macOS confirms it handed over counts toward the rating
+        // request. [REF:fr:rating-request]
         NSWorkspace.shared.open(
             [url], withApplicationAt: browser.appURL,
-            configuration: cfg, completionHandler: nil)
+            configuration: cfg
+        ) { [weak self] _, error in
+            // Domain and code only: a description can name the opened file.
+            let failure = error.map { e -> String in
+                let ns = e as NSError
+                return "\(ns.domain) \(ns.code)"
+            }
+            Task { @MainActor in self?.noteRoutingResult(failure: failure) }
+        }
+    }
+
+    // MARK: - Rating request
+
+    private func loadReviewPrompt() {
+        if let data = UserDefaults.standard.data(forKey: reviewKey),
+            let decoded = try? JSONDecoder().decode(ReviewPrompt.self, from: data)
+        {
+            reviewPrompt = decoded
+        }
+    }
+
+    private func saveReviewPrompt() {
+        if let data = try? JSONEncoder().encode(reviewPrompt) {
+            UserDefaults.standard.set(data, forKey: reviewKey)
+        }
+    }
+
+    /// Count a routing macOS confirmed; a failed open is logged, not counted.
+    /// [REF:fr:rating-request]
+    private func noteRoutingResult(failure: String?) {
+        if let failure {
+            reviewLog.info("routing failed, not counted: \(failure, privacy: .public)")
+            return
+        }
+        let version = AppIdentity.version
+        reviewPrompt.noteSuccess(version: version)
+        saveReviewPrompt()
+        reviewLog.info(
+            "routing succeeded: \(self.reviewPrompt.successes, privacy: .public)/\(ReviewPrompt.threshold, privacy: .public) toward a rating request in \(version, privacy: .public)"
+        )
+    }
+
+    /// Called when the rules window opens: true when a rating request is due,
+    /// which also records it for the running version so it is made once.
+    /// [REF:fr:rating-request]
+    func takeReviewRequest() -> Bool {
+        let version = AppIdentity.version
+        guard reviewPrompt.isDue(version: version) else {
+            reviewLog.info(
+                "rules window opened, no rating request: \(self.reviewPrompt.successes, privacy: .public)/\(ReviewPrompt.threshold, privacy: .public), requested in \(self.reviewPrompt.requestedVersion ?? "none", privacy: .public)"
+            )
+            return false
+        }
+        reviewPrompt.markRequested(version: version)
+        saveReviewPrompt()
+        reviewLog.info("rules window opened, rating requested in \(version, privacy: .public)")
+        return true
     }
 
     /// Entry point for an incoming link from the system. The app stays resident

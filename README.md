@@ -127,6 +127,10 @@ ad-hoc подписью и регистрирует бандл в LaunchServices
   закрывается само через 60 секунд, а через 3 секунды уступает следующей
   ссылке. Покрыта юнит-тестами (`Tests/SmartLinksOpenerTests/PickerQueueTests.swift`).
 - `RulesView.swift` — окно управления правилами и статусом браузера по умолчанию.
+- `ReviewPrompt.swift` — когда попросить у macOS оценку в App Store: после
+  третьей ссылки, реально переданной браузеру, при следующем открытии окна
+  правил и не чаще раза за версию. Окно оценки системное, своего нет.
+  Покрыта юнит-тестами (`Tests/SmartLinksOpenerTests/ReviewPromptTests.swift`).
 - `Resources/Info.plist` — объявляет `CFBundleURLTypes` со схемами `http`/`https`,
   благодаря чему система видит приложение как браузер.
 
